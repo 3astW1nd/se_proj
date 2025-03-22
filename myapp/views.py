@@ -21,5 +21,8 @@ def dashboard_view(request):
 def leave_view(request):
     return render(request, "leave.html")
 
+def admin_leave_view(request):
+    return render(request, "admin_leave.html")
+
 def settings_view(request):
     return render(request, "settings.html")
