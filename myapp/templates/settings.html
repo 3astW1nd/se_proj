@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - Employee Payroll System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% load static %}
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Payroll System</h2>
+            </div>
+            <div class="user-info">
+                <!-- <div class="user-avatar">
+                    <img src="{% static 'img/avatar.png' %}" alt="User Avatar" onerror="this.src='/static/img/default-avatar.png'">
+                </div> -->
+                <div class="user-details">
+                    <h3>{{ user.get_full_name }}</h3>
+                    <p>{{ user.employee.department }}</p>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{% url 'dashboard' %}"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="{% url 'payroll' %}"><span class="icon">💰</span> Payroll</a></li>
+                <li><a href="{% url 'leave' %}"><span class="icon">🗓️</span> Leave Management</a></li>
+                <li><a href="#"><span class="icon">👥</span> Employees</a></li>
+                <li class="active"><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
+                <li class="logout"><a href="{% url 'logout' %}"><span class="icon">🚪</span> Logout</a></li>
+            </ul>
+        </nav>
+        
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-bar">
+                    <input type="text" placeholder="Search...">
+                    <button type="submit">🔍</button>
+                </div>
+                <div class="top-bar-actions">
+                    <div class="notification">
+                        <span class="icon">🔔</span>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="messages">
+                        <span class="icon">✉️</span>
+                        <span class="badge">5</span>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="dashboard-content">
+                <div class="page-header">
+                    <h1>Account Settings</h1>
+                    <p>Manage your profile information and security settings</p>
+                </div>
+                
+                <div class="settings-container">
+                    <!-- Settings Navigation Tabs -->
+                    <div class="settings-tabs">
+                        <button class="tab-btn active" data-tab="profile">Profile Information</button>
+                        <button class="tab-btn" data-tab="password">Change Password</button>
+                        <button class="tab-btn" data-tab="notifications">Notification Preferences</button>
+                    </div>
+                    
+                    <!-- Profile Information Tab -->
+                    <div class="tab-content active" id="profile-tab">
+                        <div class="grid-item">
+                            <div class="item-header">
+                                <h2>Profile Information</h2>
+                            </div>
+                            
+                            {% if messages %}
+                            <div class="messages">
+                                {% for message in messages %}
+                                <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+                                    {{ message }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            <form method="post"  class="settings-form" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                
+                                <div class="profile-avatar-section">
+                                    <div class="profile-avatar">
+                                        <!-- <img src="{% static 'img/avatar.png' %}" alt="User Avatar" id="avatar-preview" onerror="this.src='/static/img/default-avatar.png'"> -->
+                                        <div class="avatar-upload">
+                                            <label for="avatar-input" class="avatar-upload-btn">
+                                                <span class="icon">📷</span>
+                                            </label>
+                                            <input type="file" id="avatar-input" name="avatar" accept="image/*" style="display: none;">
+                                        </div>
+                                    </div>
+                                    <p class="avatar-help">Click on the camera icon to upload a new profile picture</p>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>Personal Information</h3>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="first_name">First Name</label>
+                                            <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="last_name">Last Name</label>
+                                            <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="email">Email Address</label>
+                                        <input type="email" id="email" name="email" value="{{ user.email }}" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="phone">Phone Number</label>
+                                        <input type="tel" id="phone" name="phone" value="{{ user.employee.phone|default:'' }}">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="address">Address</label>
+                                        <textarea id="address" name="address" rows="3">{{ user.employee.address|default:'' }}</textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>Employment Information</h3>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="employee_id">Employee ID</label>
+                                            <input type="text" id="employee_id" value="{{ user.employee.employee_id }}" readonly>
+                                            <p class="field-help">Employee ID cannot be changed</p>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="department">Department</label>
+                                            <input type="text" id="department" name="department" value="{{ user.employee.department }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="position">Position</label>
+                                            <input type="text" id="position" name="position" value="{{ user.employee.position|default:'' }}">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="join_date">Join Date</label>
+                                            <input type="date" id="join_date" name="join_date" value="{{ user.employee.join_date|date:'Y-m-d'|default:'' }}" readonly>
+                                            <p class="field-help">Join date cannot be changed</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>Emergency Contact</h3>
+                                    
+                                    <div class="form-group">
+                                        <label for="emergency_contact_name">Contact Name</label>
+                                        <input type="text" id="emergency_contact_name" name="emergency_contact_name" value="{{ user.employee.emergency_contact_name|default:'' }}">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="emergency_contact_phone">Contact Phone</label>
+                                        <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone" value="{{ user.employee.emergency_contact_phone|default:'' }}">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="emergency_contact_relation">Relationship</label>
+                                        <input type="text" id="emergency_contact_relation" name="emergency_contact_relation" value="{{ user.employee.emergency_contact_relation|default:'' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Change Password Tab -->
+                    <div class="tab-content" id="password-tab">
+                        <div class="grid-item">
+                            <div class="item-header">
+                                <h2>Change Password</h2>
+                            </div>
+                            
+                            <form method="post" class="settings-form">
+                                {% csrf_token %}
+                                
+                                <div class="form-section">
+                                    <div class="form-group">
+                                        <label for="current_password">Current Password</label>
+                                        <input type="password" id="current_password" name="current_password" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="new_password">New Password</label>
+                                        <input type="password" id="new_password" name="new_password" required>
+                                        <p class="field-help">Password must be at least 8 characters long and include a mix of letters, numbers, and special characters</p>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="confirm_password">Confirm New Password</label>
+                                        <input type="password" id="confirm_password" name="confirm_password" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="password-strength">
+                                    <div class="strength-meter">
+                                        <div class="strength-bar" id="strength-bar"></div>
+                                    </div>
+                                    <p class="strength-text" id="strength-text">Password strength: Not entered</p>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Change Password</button>
+                                </div>
+                            </form>
+                            
+                            <div class="password-reset-section">
+                                <h3>Forgot Your Password?</h3>
+                                <p>If you've forgotten your current password, you can request a password reset link to be sent to your email.</p>
+                                <a href="#" class="btn btn-secondary">Request Password Reset</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notification Preferences Tab -->
+                    <div class="tab-content" id="notifications-tab">
+                        <div class="grid-item">
+                            <div class="item-header">
+                                <h2>Notification Preferences</h2>
+                            </div>
+                            
+                            <form method="post" action="#" class="settings-form">
+                                {% csrf_token %}
+                                
+                                <div class="form-section">
+                                    <h3>Email Notifications</h3>
+                                    
+                                    <div class="notification-option">
+                                        <div class="notification-toggle">
+                                            <input type="checkbox" id="payslip_notification" name="payslip_notification" class="toggle-input" checked>
+                                            <label for="payslip_notification" class="toggle-label"></label>
+                                        </div>
+                                        <div class="notification-details">
+                                            <h4>Payslip Notifications</h4>
+                                            <p>Receive an email when a new payslip is available</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="notification-option">
+                                        <div class="notification-toggle">
+                                            <input type="checkbox" id="leave_notification" name="leave_notification" class="toggle-input" checked>
+                                            <label for="leave_notification" class="toggle-label"></label>
+                                        </div>
+                                        <div class="notification-details">
+                                            <h4>Leave Request Updates</h4>
+                                            <p>Receive an email when your leave request status changes</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="notification-option">
+                                        <div class="notification-toggle">
+                                            <input type="checkbox" id="announcement_notification" name="announcement_notification" class="toggle-input" checked>
+                                            <label for="announcement_notification" class="toggle-label"></label>
+                                        </div>
+                                        <div class="notification-details">
+                                            <h4>Company Announcements</h4>
+                                            <p>Receive an email for new company announcements</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>System Notifications</h3>
+                                    
+                                    <div class="notification-option">
+                                        <div class="notification-toggle">
+                                            <input type="checkbox" id="browser_notification" name="browser_notification" class="toggle-input" checked>
+                                            <label for="browser_notification" class="toggle-label"></label>
+                                        </div>
+                                        <div class="notification-details">
+                                            <h4>Browser Notifications</h4>
+                                            <p>Receive browser notifications for important updates</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Save Preferences</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching functionality
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons and contents
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Show corresponding tab content
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId + '-tab').classList.add('active');
+                });
+            });
+            
+            // Avatar preview functionality
+            const avatarInput = document.getElementById('avatar-input');
+            const avatarPreview = document.getElementById('avatar-preview');
+            
+            if (avatarInput && avatarPreview) {
+                avatarInput.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            avatarPreview.src = e.target.result;
+                        };
+                        
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+            }
+            
+            // Password strength meter
+            const newPasswordInput = document.getElementById('new_password');
+            const strengthBar = document.getElementById('strength-bar');
+            const strengthText = document.getElementById('strength-text');
+            
+            if (newPasswordInput && strengthBar && strengthText) {
+                newPasswordInput.addEventListener('input', function() {
+                    const password = this.value;
+                    let strength = 0;
+                    let status = '';
+                    
+                    if (password.length === 0) {
+                        strength = 0;
+                        status = 'Not entered';
+                    } else if (password.length < 6) {
+                        strength = 25;
+                        status = 'Weak';
+                    } else if (password.length < 8) {
+                        strength = 50;
+                        status = 'Medium';
+                    } else if (password.match(/[a-z]/) && password.match(/[A-Z]/) && password.match(/[0-9]/)) {
+                        if (password.match(/[^a-zA-Z0-9]/)) {
+                            strength = 100;
+                            status = 'Strong';
+                        } else {
+                            strength = 75;
+                            status = 'Good';
+                        }
+                    } else {
+                        strength = 75;
+                        status = 'Good';
+                    }
+                    
+                    // Update strength bar
+                    strengthBar.style.width = strength + '%';
+                    
+                    // Update color based on strength
+                    if (strength <= 25) {
+                        strengthBar.style.backgroundColor = '#e74c3c';
+                    } else if (strength <= 50) {
+                        strengthBar.style.backgroundColor = '#f39c12';
+                    } else if (strength <= 75) {
+                        strengthBar.style.backgroundColor = '#3498db';
+                    } else {
+                        strengthBar.style.backgroundColor = '#2ecc71';
+                    }
+                    
+                    // Update text
+                    strengthText.textContent = 'Password strength: ' + status;
+                });
+            }
+            
+            // Password confirmation validation
+            const confirmPasswordInput = document.getElementById('confirm_password');
+            
+            if (newPasswordInput && confirmPasswordInput) {
+                confirmPasswordInput.addEventListener('input', function() {
+                    if (this.value !== newPasswordInput.value) {
+                        this.setCustomValidity('Passwords do not match');
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                });
+                
+                newPasswordInput.addEventListener('input', function() {
+                    if (confirmPasswordInput.value !== '') {
+                        if (confirmPasswordInput.value !== this.value) {
+                            confirmPasswordInput.setCustomValidity('Passwords do not match');
+                        } else {
+                            confirmPasswordInput.setCustomValidity('');
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
