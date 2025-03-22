@@ -28,6 +28,10 @@ class Employee(models.Model):
     def check_password(self, raw_password):
         """Checks password validity"""
         return check_password(raw_password, self.password)
+    
+    
+    def check_role(self):
+        return self.role
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.role})"

@@ -10,7 +10,6 @@ urlpatterns = [
     path('payroll/', views.payroll_view, name='payroll'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('leave/', views.leave_view, name='leave'),
-    path('admin_leave/', views.admin_leave_view, name='admin_leave'),
     path('settings/', views.settings_view, name='settings'),
 ]
 

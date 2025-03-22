@@ -81,10 +81,19 @@ def payroll_view(request):
 
 
 def leave_view(request):
-    return render(request, "leave.html")
-
-def admin_leave_view(request):
-    return render(request, "admin_leave.html")
+    user_id = request.session.get("user_id")
+    try:
+        employee = Employee.objects.get(id=user_id)
+        if employee.check_role() == "Admin": 
+            return render(request, "admin_leave.html")
+        elif employee.check_role() == "HR":
+            return render(request, "hr_leave.html")
+        else:
+            return render(request, "leave.html")
+         
+    except Employee.DoesNotExist:
+        return render(request, "login.html", {"error_message": "User does not exist"})
+    
 
 def settings_view(request):
     return render(request, "settings.html")
