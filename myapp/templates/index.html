@@ -1,13 +1,193 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <title>My Django Page</title>
+    <title>Dashboard - Employee Payroll System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% load static %}
 </head>
 <body>
-    <h1>Welcome to My Django App!</h1>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Payroll System</h2>
+            </div>
+            <div class="user-info">
+                <!-- <div class="user-avatar">
+                    <img src="{% static 'img/avatar.png' %}" alt="User Avatar" onerror="this.src='/static/img/default-avatar.png'">
+                </div> -->
+                <div class="user-details">
+                    <h3>{{ user.get_full_name }}</h3>
+                    <p>{{ user.employee.department }}</p>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li class="active"><a href="#"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="#"><span class="icon">💰</span> Payroll</a></li>
+                <li><a href="#"><span class="icon">🗓️</span> Leave Management</a></li>
+                <li><a href="#"><span class="icon">👥</span> Employees</a></li>
+                <li><a href="#"><span class="icon">⚙️</span> Settings</a></li>
+                <li><a href="{% url 'logout' %}"><span class="icon">🚪</span> Logout</a></li>
+            </ul>
+        </nav>
+        
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-bar">
+                    <input type="text" placeholder="Search...">
+                    <button type="submit">🔍</button>
+                </div>
+                <div class="top-bar-actions">
+                    <div class="notification">
+                        <span class="icon">🔔</span>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="messages">
+                        <span class="icon">✉️</span>
+                        <span class="badge">5</span>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="dashboard-content">
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                    <p>Welcome back, {{ user.first_name }}!</p>
+                </div>
+                
+                <div class="stats-cards">
+                    <div class="card">
+                        <div class="card-icon">💵</div>
+                        <div class="card-info">
+                            <h3>Salary</h3>
+                            <p class="amount">${{ user.employee.salary|default:"0.00" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📅</div>
+                        <div class="card-info">
+                            <h3>Leave Balance</h3>
+                            <p class="amount">{{ user.employee.leave_balance|default:"0" }} days</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">⏱️</div>
+                        <div class="card-info">
+                            <h3>Hours Worked</h3>
+                            <p class="amount">{{ user.employee.hours_worked|default:"0" }} hrs</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📊</div>
+                        <div class="card-info">
+                            <h3>Performance</h3>
+                            <p class="amount">{{ user.employee.performance_rating|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-grid">
+                    <div class="grid-item recent-payslips">
+                        <div class="item-header">
+                            <h2>Recent Payslips</h2>
+                            <a href="#" class="view-all">View All</a>
+                        </div>
+                        <div class="item-content">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Net Salary</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if payslips %}
+                                        {% for payslip in payslips %}
+                                        <tr>
+                                            <td>{{ payslip.month }}</td>
+                                            <td>${{ payslip.net_salary }}</td>
+                                            <td><span class="status {{ payslip.status|lower }}">{{ payslip.status }}</span></td>
+                                            <td><a href="#" class="btn-small">View</a></td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4">No payslips available</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-item leave-requests">
+                        <div class="item-header">
+                            <h2>Leave Requests</h2>
+                            <a href="#" class="view-all">View All</a>
+                        </div>
+                        <div class="item-content">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>From</th>
+                                        <th>To</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if leave_requests %}
+                                        {% for leave in leave_requests %}
+                                        <tr>
+                                            <td>{{ leave.type }}</td>
+                                            <td>{{ leave.start_date }}</td>
+                                            <td>{{ leave.end_date }}</td>
+                                            <td><span class="status {{ leave.status|lower }}">{{ leave.status }}</span></td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4">No leave requests</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-item announcements">
+                        <div class="item-header">
+                            <h2>Announcements</h2>
+                        </div>
+                        <div class="item-content">
+                            <div class="announcement-list">
+                                {% if announcements %}
+                                    {% for announcement in announcements %}
+                                    <div class="announcement">
+                                        <h3>{{ announcement.title }}</h3>
+                                        <p class="date">{{ announcement.date }}</p>
+                                        <p class="description">{{ announcement.description }}</p>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="announcement">
+                                        <p>No announcements at this time</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                </div>
+            </div>
+        </main>
+    </div>
 </body>
 </html>
