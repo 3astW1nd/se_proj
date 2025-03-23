@@ -95,7 +95,11 @@ def leave_view(request):
         elif employee.check_role() == "HR":
             return render(request, "hr_leave.html")
         else:
-            return render(request, "leave.html")
+            leave_requests = Leave.objects.filter(employee=employee).order_by('-requested_on')
+            return render(request, "leave.html", {
+                "employee": employee,
+                "leave_requests": leave_requests
+            })
          
     except Employee.DoesNotExist:
         return render(request, "login.html", {"error_message": "User does not exist"})
@@ -105,6 +109,10 @@ def settings_view(request):
     return render(request, "settings.html")
 
 # ---------------- Leaves View ----------------
+from django.shortcuts import redirect
+from django.utils import timezone
+from datetime import datetime
+
 def request_leave_view(request):
     """View for employees to request leave"""
     user_id = request.session.get("user_id")
@@ -114,7 +122,6 @@ def request_leave_view(request):
     try:
         employee = Employee.objects.get(id=user_id)
         
-        # Handle form submission
         if request.method == "POST":
             # Get form data
             leave_type = request.POST.get("leave_type")
@@ -127,14 +134,13 @@ def request_leave_view(request):
                 return render(request, "leave.html", {
                     "employee": employee,
                     "error_message": "All fields are required",
-                    "form_data": request.POST  # Return form data to repopulate the form
+                    "form_data": request.POST
                 })
             
             # Calculate number of days
-            from datetime import datetime
             start = datetime.strptime(start_date, "%Y-%m-%d")
             end = datetime.strptime(end_date, "%Y-%m-%d")
-            days = (end - start).days + 1  # Include both start and end days
+            days = (end - start).days + 1  
             
             # Validate date range
             if days < 1:
@@ -144,25 +150,21 @@ def request_leave_view(request):
                     "form_data": request.POST
                 })
             
-            # Create and save the leave request
+            # Save leave request
             leave = Leave(
                 employee=employee,
                 leave_type=leave_type,
                 start_date=start_date,
                 end_date=end_date,
-                status="Pending",  # Default status is pending
+                status="Pending",
                 requested_on=timezone.now()
             )
             leave.save()
             
-            # Return success message
-            return render(request, "leave.html", {
-                "employee": employee,
-                "success_message": "Leave request submitted successfully!",
-                "leave_requests": Leave.objects.filter(employee=employee).order_by('-requested_on')
-            })
-        
-        # GET request - display form
+            # ✅ Redirect to prevent resubmission on refresh
+            return redirect("request_leave_success")  # Replace with actual success page or same form page
+            
+        # GET request - Display form
         leave_requests = Leave.objects.filter(employee=employee).order_by('-requested_on')
         return render(request, "leave.html", {
             "employee": employee,
@@ -171,7 +173,22 @@ def request_leave_view(request):
         
     except Employee.DoesNotExist:
         return redirect("login")
+
+
+def request_leave_success(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login")
     
+    employee = Employee.objects.get(id=user_id)
+    leave_requests = Leave.objects.filter(employee=employee).order_by('-requested_on')
+
+    return render(request, "leave.html", {
+        "employee": employee,
+        "success_message": "Leave request submitted successfully!",
+        "leave_requests": leave_requests
+    })
+
 
 def manager_leaves_view(request):
     """View for administrators to see all pending leave requests"""
