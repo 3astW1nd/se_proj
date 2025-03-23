@@ -1,9 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.utils import timezone
 # Create your models here.
 from django.db import models
 from django.contrib.auth.hashers import make_password, check_password
+
+
+class Salary(models.Model):
+    employee_id = models.IntegerField()  # Simple integer field instead of ForeignKey
+    basic_salary = models.DecimalField(max_digits=10, decimal_places=2)
+    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    net_pay = models.DecimalField(max_digits=10, decimal_places=2)
+    generated_on = models.DateField(default=timezone.now)
+    
+    def __str__(self):
+        return f"Employee ID: {self.employee_id} - ${self.basic_salary}"
+    
+    class Meta:
+        db_table = "salary"  # Match the PostgreSQL table name
 
 class Employee(models.Model):
     ROLE_CHOICES = (
