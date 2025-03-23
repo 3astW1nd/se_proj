@@ -85,6 +85,9 @@ def dashboard_view(request):
 def payroll_view(request):
     return render(request, 'payroll.html')
 
+def salary_view(request):
+    return render(request, 'salary.html')
+
 
 def leave_view(request):
     user_id = request.session.get("user_id")

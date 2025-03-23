@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="/static/css/style.css">
     {% load static %}
 </head>
+
 <body>
     <div class="dashboard-container">
         <nav class="sidebar">
@@ -24,14 +26,14 @@
             </div>
             <ul class="nav-links">
                 <li class="active"><a href="#"><span class="icon">📊</span> Dashboard</a></li>
-                <li><a href="{% url 'payroll' %}"><span class="icon">💰</span> Payroll</a></li>
+                <li><a href="{% url 'salary' %}"><span class="icon">💰</span> Payroll</a></li>
                 <li><a href="{% url 'leave' %}"><span class="icon">🗓️</span> Leave Management</a></li>
                 <li><a href="#"><span class="icon">👥</span> Employees</a></li>
                 <li><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
                 <li><a href="{% url 'logout' %}"><span class="icon">🚪</span> Logout</a></li>
             </ul>
         </nav>
-        
+
         <main class="main-content">
             <header class="top-bar">
                 <div class="search-bar">
@@ -49,13 +51,13 @@
                     </div>
                 </div>
             </header>
-            
+
             <div class="dashboard-content">
                 <div class="page-header">
                     <h1>Dashboard</h1>
                     <p>Welcome back, {{ user.first_name }}!</p>
                 </div>
-                
+
                 <div class="stats-cards">
                     <div class="card">
                         <div class="card-icon">💵</div>
@@ -64,7 +66,7 @@
                             <p class="amount">${{ user.employee.salary|default:"0.00" }}</p>
                         </div>
                     </div>
-                    
+
                     <div class="card">
                         <div class="card-icon">📅</div>
                         <div class="card-info">
@@ -72,7 +74,7 @@
                             <p class="amount">{{ user.employee.leave_balance|default:"0" }} days</p>
                         </div>
                     </div>
-                    
+
                     <div class="card">
                         <div class="card-icon">⏱️</div>
                         <div class="card-info">
@@ -80,7 +82,7 @@
                             <p class="amount">{{ user.employee.hours_worked|default:"0" }} hrs</p>
                         </div>
                     </div>
-                    
+
                     <div class="card">
                         <div class="card-icon">📊</div>
                         <div class="card-info">
@@ -89,7 +91,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="dashboard-grid">
                     <div class="grid-item recent-payslips">
                         <div class="item-header">
@@ -108,24 +110,25 @@
                                 </thead>
                                 <tbody>
                                     {% if payslips %}
-                                        {% for payslip in payslips %}
-                                        <tr>
-                                            <td>{{ payslip.month }}</td>
-                                            <td>${{ payslip.net_salary }}</td>
-                                            <td><span class="status {{ payslip.status|lower }}">{{ payslip.status }}</span></td>
-                                            <td><a href="#" class="btn-small">View</a></td>
-                                        </tr>
-                                        {% endfor %}
+                                    {% for payslip in payslips %}
+                                    <tr>
+                                        <td>{{ payslip.month }}</td>
+                                        <td>${{ payslip.net_salary }}</td>
+                                        <td><span class="status {{ payslip.status|lower }}">{{ payslip.status }}</span>
+                                        </td>
+                                        <td><a href="#" class="btn-small">View</a></td>
+                                    </tr>
+                                    {% endfor %}
                                     {% else %}
-                                        <tr>
-                                            <td colspan="4">No payslips available</td>
-                                        </tr>
+                                    <tr>
+                                        <td colspan="4">No payslips available</td>
+                                    </tr>
                                     {% endif %}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    
+
                     <div class="grid-item leave-requests">
                         <div class="item-header">
                             <h2>Leave Requests</h2>
@@ -143,24 +146,24 @@
                                 </thead>
                                 <tbody>
                                     {% if leave_requests %}
-                                        {% for leave in leave_requests %}
-                                        <tr>
-                                            <td>{{ leave.type }}</td>
-                                            <td>{{ leave.start_date }}</td>
-                                            <td>{{ leave.end_date }}</td>
-                                            <td><span class="status {{ leave.status|lower }}">{{ leave.status }}</span></td>
-                                        </tr>
-                                        {% endfor %}
+                                    {% for leave in leave_requests %}
+                                    <tr>
+                                        <td>{{ leave.type }}</td>
+                                        <td>{{ leave.start_date }}</td>
+                                        <td>{{ leave.end_date }}</td>
+                                        <td><span class="status {{ leave.status|lower }}">{{ leave.status }}</span></td>
+                                    </tr>
+                                    {% endfor %}
                                     {% else %}
-                                        <tr>
-                                            <td colspan="4">No leave requests</td>
-                                        </tr>
+                                    <tr>
+                                        <td colspan="4">No leave requests</td>
+                                    </tr>
                                     {% endif %}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    
+
                     <div class="grid-item announcements">
                         <div class="item-header">
                             <h2>Announcements</h2>
@@ -168,26 +171,27 @@
                         <div class="item-content">
                             <div class="announcement-list">
                                 {% if announcements %}
-                                    {% for announcement in announcements %}
-                                    <div class="announcement">
-                                        <h3>{{ announcement.title }}</h3>
-                                        <p class="date">{{ announcement.date }}</p>
-                                        <p class="description">{{ announcement.description }}</p>
-                                    </div>
-                                    {% endfor %}
+                                {% for announcement in announcements %}
+                                <div class="announcement">
+                                    <h3>{{ announcement.title }}</h3>
+                                    <p class="date">{{ announcement.date }}</p>
+                                    <p class="description">{{ announcement.description }}</p>
+                                </div>
+                                {% endfor %}
                                 {% else %}
-                                    <div class="announcement">
-                                        <p>No announcements at this time</p>
-                                    </div>
+                                <div class="announcement">
+                                    <p>No announcements at this time</p>
+                                </div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
-                    
-                    
+
+
                 </div>
             </div>
         </main>
     </div>
 </body>
+
 </html>
