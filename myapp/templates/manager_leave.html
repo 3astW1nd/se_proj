@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- manager_leave.html -->
+    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
     <title>Leave Approval - Employee Payroll System</title>
+
     <style>
         /* Global Styles */
         :root {
@@ -615,7 +620,7 @@
             <div class="user-info">
                 <div class="user-details">
                     <h3>John Manager</h3>
-                    <p>HR Department</p>
+                    <p>Manager</p>
                 </div>
             </div>
             <ul class="nav-links">
@@ -624,7 +629,8 @@
                 <li class="active"><a href="#"><span class="icon">🗓️</span> Leave Management</a></li>
                 <li><a href="#"><span class="icon">👥</span> Employees</a></li>
                 <li><a href="#"><span class="icon">⚙️</span> Settings</a></li>
-                <li><a href="{% url 'logout' %}"><span class="icon">🚪</span> Logout</a></li>
+                <li><a href="
+                    "><span class="icon">🚪</span> Logout</a></li>
             </ul>
         </nav>
         
@@ -658,7 +664,7 @@
                             <div class="card-icon">⏳</div>
                             <div class="card-info">
                                 <h3>Pending Requests</h3>
-                                <p class="amount">12</p>
+                                <p class="amount">{{ stats.pending_count }}</p>
                             </div>
                         </div>
                         
@@ -666,7 +672,7 @@
                             <div class="card-icon">✅</div>
                             <div class="card-info">
                                 <h3>Approved This Month</h3>
-                                <p class="amount">28</p>
+                                <p class="amount">{{ stats.approved_count }}</p>
                             </div>
                         </div>
                         
@@ -674,7 +680,7 @@
                             <div class="card-icon">❌</div>
                             <div class="card-info">
                                 <h3>Rejected This Month</h3>
-                                <p class="amount">5</p>
+                                <p class="amount">{{ stats.rejected_count }}</p>
                             </div>
                         </div>
                         
@@ -682,7 +688,7 @@
                             <div class="card-icon">👥</div>
                             <div class="card-info">
                                 <h3>Team Members On Leave</h3>
-                                <p class="amount">3</p>
+                                <p class="amount">{{ stats.on_leave_count }}</p>
                             </div>
                         </div>
                     </div>
@@ -699,6 +705,7 @@
                                     <option value="development">Development</option>
                                     <option value="design">Design</option>
                                     <option value="marketing">Marketing</option>
+                                    <option value="operations">Operations</option>
                                     <option value="hr">HR</option>
                                 </select>
                             </div>
@@ -726,29 +733,35 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody></tbody>
+                            <tbody>
+                                {% for leave in pending_requests %}
+                                <tr data-department="{{ leave.employee.department|lower }}"  data-status="{{ leave.status|lower }}">
+                                    <td>{{ leave.employee.first_name }} {{ leave.employee.last_name }}</td>
+                                    <td>{{ leave.employee.department }}</td>
+                                    <td>{{ leave.leave_type }}</td>
+                                    <td>{{ leave.start_date }}</td>
+                                    <td>{{ leave.end_date }}</td>
+                                    <td>{{ leave.days }}</td>
+                                    <td>{{ leave.status }}</td>
+                                    <td>
+                                        <button class="btn-small view-btn" data-id="{{ leave.id }}">View</button>
+                                        {% if leave.status == 'Pending' %}
+                                        <button class="btn-small approve-btn" data-id="{{ leave.id }}">Approve</button>
+                                        <button class="btn-small reject-btn" data-id="{{ leave.id }}">Reject</button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8">No pending requests found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
                         </table>
                     </div>
                 </div>
                 
-                <!-- Leave Calendar View -->
-                <div class="grid-item">
-                    <div class="item-header">
-                        <h2>Team Leave Calendar</h2>
-                        <div class="filter-dropdown">
-                            <select id="month-filter">
-                                <option value="3">March 2023</option>
-                                <option value="4">April 2023</option>
-                                <option value="5">May 2023</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="item-content">
-                        <p style="text-align: center; padding: 50px 0; color: #777;">
-                            Calendar view will be displayed here showing all approved leaves for the selected month
-                        </p>
-                    </div>
-                </div>
+               
                 
                 <!-- Leave Details Modal -->
                 <div id="leave-details-modal" class="modal">
@@ -761,60 +774,45 @@
                             <div class="leave-details">
                                 <div class="detail-row">
                                     <div class="detail-label">Employee:</div>
-                                    <div class="detail-value" id="modal-employee">Sarah Johnson</div>
+                                    <div class="detail-value" id="modal-employee"></div>
                                 </div>
                                 <div class="detail-row">
                                     <div class="detail-label">Department:</div>
-                                    <div class="detail-value" id="modal-department">Development</div>
+                                    <div class="detail-value" id="modal-department"></div>
                                 </div>
                                 <div class="detail-row">
                                     <div class="detail-label">Leave Type:</div>
-                                    <div class="detail-value" id="modal-leave-type">Annual Leave</div>
+                                    <div class="detail-value" id="modal-leave-type"></div>
                                 </div>
                                 <div class="detail-row">
                                     <div class="detail-label">Start Date:</div>
-                                    <div class="detail-value" id="modal-start-date">2023-03-15</div>
+                                    <div class="detail-value" id="modal-start-date"></div>
                                 </div>
                                 <div class="detail-row">
                                     <div class="detail-label">End Date:</div>
-                                    <div class="detail-value" id="modal-end-date">2023-03-22</div>
+                                    <div class="detail-value" id="modal-end-date"></div>
                                 </div>
                                 <div class="detail-row">
                                     <div class="detail-label">Total Days:</div>
-                                    <div class="detail-value" id="modal-days">8</div>
+                                    <div class="detail-value" id="modal-days"></div>
                                 </div>
                                 <div class="detail-row">
                                     <div class="detail-label">Status:</div>
-                                    <div class="detail-value" id="modal-status">Pending</div>
+                                    <div class="detail-value" id="modal-status"></div>
                                 </div>
-                                <div class="detail-row">
-                                    <div class="detail-label">Applied On:</div>
-                                    <div class="detail-value" id="modal-applied-date">2023-03-01</div>
-                                </div>
-                                <div class="detail-row full-width">
-                                    <div class="detail-label">Reason:</div>
-                                    <div class="detail-value" id="modal-reason">Family vacation planned months in advance. All project deliverables will be completed before my leave.</div>
-                                </div>
-                                <div class="detail-row full-width" id="modal-comments-row">
-                                    <div class="detail-label">Manager Comments:</div>
-                                    <div class="detail-value" id="modal-comments"></div>
-                                </div>
-                                <div class="detail-row full-width" id="modal-response-form">
-                                    <div class="form-group">
-                                        <label for="response-comments">Your Response:</label>
-                                        <textarea id="response-comments" placeholder="Enter your comments here..."></textarea>
-                                    </div>
-                                </div>
+                               
+                                
                             </div>
                         </div>
-                        <div class="modal-footer">
+                        <div class="modal-footer" id="modal-actions">
                             <button class="btn btn-approve" id="modal-approve-btn">Approve</button>
                             <button class="btn btn-reject" id="modal-reject-btn">Reject</button>
+                            <button class="btn" id="modal-close-btn">Close</button>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Approval Confirmation Modal -->
+
+                <!-- Confirmation Modal -->
                 <div id="confirmation-modal" class="modal">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -830,10 +828,355 @@
                         </div>
                     </div>
                 </div>
+
+
             </div>
         </main>
     </div>
     
     </body>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const teamSelect = document.getElementById('team-select');
+    const statusFilter = document.getElementById('status-filter');
+    
+    // Function to apply both filters
+    function applyFilters() {
+    const selectedTeam = teamSelect.value.toLowerCase().trim();
+    const selectedStatus = statusFilter.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.data-table tbody tr:not(.empty-row):not(.no-results-row)');
+
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const department = (row.getAttribute('data-department') || '').toLowerCase().trim();
+        const status = (row.getAttribute('data-status') || '').toLowerCase().trim(); // ✅ Fix: Ensure it exists and normalize
+        const teamMatch = selectedTeam === 'all' || department === selectedTeam;
+        const statusMatch = selectedStatus === 'all' || status === selectedStatus; // ✅ Fix: Trimmed comparison
+
+        if (teamMatch && statusMatch) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    // Show or hide the "no results" message
+    let noResultsRow = document.querySelector('.no-results-row');
+    if (visibleCount === 0) {
+        if (!noResultsRow) {
+            noResultsRow = document.createElement('tr');
+            noResultsRow.className = 'no-results-row';
+            const cell = document.createElement('td');
+            cell.colSpan = 8;
+            cell.textContent = 'No leave requests match your filters';
+            cell.style.textAlign = 'center';
+            noResultsRow.appendChild(cell);
+            document.querySelector('.data-table tbody').appendChild(noResultsRow);
+        }
+    } else if (noResultsRow) {
+        noResultsRow.remove();
+    }
+
+    // Hide the empty row if we have results
+    const emptyRow = document.querySelector('.empty-row');
+    if (emptyRow) {
+        emptyRow.style.display = visibleCount > 0 ? 'none' : '';
+    }
+}
+ 
+    // Add event listeners to both filters
+    teamSelect.addEventListener('change', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+    
+    // Apply filters on page load
+    applyFilters();
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get modal elements
+    const leaveModal = document.getElementById('leave-details-modal');
+    const confirmationModal = document.getElementById('confirmation-modal');
+    const viewButtons = document.querySelectorAll('.view-btn');
+    const approveButtons = document.querySelectorAll('.approve-btn');
+    const rejectButtons = document.querySelectorAll('.reject-btn');
+    const closeButtons = document.querySelectorAll('.close');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    
+    // CSRF token for AJAX requests
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // Current leave ID being processed
+    let currentLeaveId = null;
+    
+    // 1. VIEW BUTTON FUNCTIONALITY
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const leaveId = this.getAttribute('data-id');
+            currentLeaveId = leaveId;
+            
+            // Get the row data for initial display
+            const row = this.closest('tr');
+            const employee = row.cells[0].textContent.trim();
+            const department = row.cells[1].textContent.trim();
+            const leaveType = row.cells[2].textContent.trim();
+            const startDate = row.cells[3].textContent.trim();
+            const endDate = row.cells[4].textContent.trim();
+            const days = row.cells[5].textContent.trim();
+            const statusCell = row.cells[6];
+            const status = statusCell.textContent.trim();
+            
+            // Populate the modal with available data
+            document.getElementById('modal-employee').textContent = employee;
+            document.getElementById('modal-department').textContent = department;
+            document.getElementById('modal-leave-type').textContent = leaveType;
+            document.getElementById('modal-start-date').textContent = startDate;
+            document.getElementById('modal-end-date').textContent = endDate;
+            document.getElementById('modal-days').textContent = days;
+            document.getElementById('modal-status').textContent = status;
+            
+            // Set the status class for styling
+            const modalStatus = document.getElementById('modal-status');
+            modalStatus.className = '';
+            if (status.toLowerCase().includes('approved')) {
+                modalStatus.classList.add('status', 'approved');
+            } else if (status.toLowerCase().includes('rejected')) {
+                modalStatus.classList.add('status', 'rejected');
+            } else {
+                modalStatus.classList.add('status', 'pending');
+            }
+            
+            // Show/hide action buttons based on status
+            const modalActions = document.getElementById('modal-actions');
+            const modalApproveBtn = document.getElementById('modal-approve-btn');
+            const modalRejectBtn = document.getElementById('modal-reject-btn');
+            
+            if (status.toLowerCase().includes('pending')) {
+                modalApproveBtn.style.display = 'inline-block';
+                modalRejectBtn.style.display = 'inline-block';
+            } else {
+                modalApproveBtn.style.display = 'none';
+                modalRejectBtn.style.display = 'none';
+            }
+            
+            // Fetch additional details via AJAX
+            
+            
+            leaveModal.style.display = 'block';
+        });
+    });
+    
+    // 2. APPROVE BUTTON FUNCTIONALITY
+    approveButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const leaveId = this.getAttribute('data-id');
+            currentLeaveId = leaveId;
+            
+            document.getElementById('confirmation-message').textContent = 'Are you sure you want to approve this leave request?';
+            document.getElementById('confirm-yes').setAttribute('data-action', 'approve');
+            
+            confirmationModal.style.display = 'block';
+        });
+    });
+    
+    // 3. REJECT BUTTON FUNCTIONALITY
+    rejectButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const leaveId = this.getAttribute('data-id');
+            currentLeaveId = leaveId;
+            
+            document.getElementById('confirmation-message').textContent = 'Are you sure you want to reject this leave request?';
+            document.getElementById('confirm-yes').setAttribute('data-action', 'reject');
+            
+            confirmationModal.style.display = 'block';
+        });
+    });
+    
+    // 4. MODAL APPROVE/REJECT BUTTONS
+    document.getElementById('modal-approve-btn').addEventListener('click', function() {
+        document.getElementById('confirmation-message').textContent = 'Are you sure you want to approve this leave request?';
+        document.getElementById('confirm-yes').setAttribute('data-action', 'approve');
+        
+        leaveModal.style.display = 'none';
+        confirmationModal.style.display = 'block';
+    });
+    
+    document.getElementById('modal-reject-btn').addEventListener('click', function() {
+        document.getElementById('confirmation-message').textContent = 'Are you sure you want to reject this leave request?';
+        document.getElementById('confirm-yes').setAttribute('data-action', 'reject');
+        
+        leaveModal.style.display = 'none';
+        confirmationModal.style.display = 'block';
+    });
+    
+    // 5. CONFIRMATION HANDLING
+    document.getElementById('confirm-yes').addEventListener('click', function() {
+        const action = this.getAttribute('data-action');
+        
+        // Process the action via AJAX
+        processLeaveAction(currentLeaveId, action);
+        
+        // Close the confirmation modal
+        confirmationModal.style.display = 'none';
+    });
+    
+    document.getElementById('confirm-no').addEventListener('click', function() {
+        confirmationModal.style.display = 'none';
+        
+        // If we came from the leave details modal, go back to it
+        if (document.getElementById('confirm-yes').getAttribute('data-action').includes('approve') || 
+            document.getElementById('confirm-yes').getAttribute('data-action').includes('reject')) {
+            leaveModal.style.display = 'block';
+        }
+    });
+    
+    // 6. CLOSE BUTTONS
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            leaveModal.style.display = 'none';
+            confirmationModal.style.display = 'none';
+        });
+    });
+    
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', function() {
+            leaveModal.style.display = 'none';
+        });
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === leaveModal) {
+            leaveModal.style.display = 'none';
+        }
+        if (event.target === confirmationModal) {
+            confirmationModal.style.display = 'none';
+        }
+    });
+    
+    // 7. PROCESS LEAVE ACTION FUNCTION
+    function processLeaveAction(leaveId, action) {
+        // Create form data for the request
+        const formData = new FormData();
+        formData.append('action', action);
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        
+        // Send AJAX request
+        fetch(`/manager/leave/${leaveId}/${action}/`, {
+    method: 'POST',
+    body: formData,
+    headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': csrfToken
+    }
+})
+.then(response => {
+    if (!response.ok) {
+        return response.text().then(errorText => {
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        });
+    }
+    return response.json();
+})
+.then(data => {
+    if (data.success) {
+        updateLeaveRow(leaveId, action);
+        alert(data.message || `Leave request ${action}d successfully!`);
+    } else {
+        alert(data.message || `Failed to ${action} leave request.`);
+    }
+})
+.catch(error => {
+    console.error(`Error ${action}ing leave:`, error);
+    alert(`An error occurred: ${error.message}`);
+});
+
+    }
+    
+    // 8. UPDATE UI AFTER ACTION
+    function updateLeaveRow(leaveId, action) {
+        // Find the row with the matching leave ID
+        const row = document.querySelector(`.${action}-btn[data-id="${leaveId}"]`).closest('tr');
+        
+        // Update the status cell
+        const statusCell = row.cells[6];
+        const statusText = action === 'approve' ? 'Approved' : 'Rejected';
+        statusCell.innerHTML = `<span class="status ${action}d">${statusText}</span>`;
+        
+        // Update the actions cell - remove approve/reject buttons
+        const actionsCell = row.cells[7];
+        actionsCell.innerHTML = `<button class="btn-small view-btn" data-id="${leaveId}">View</button>`;
+        
+        // Re-attach event listener to the new view button
+        const newViewBtn = actionsCell.querySelector('.view-btn');
+        newViewBtn.addEventListener('click', function() {
+            const leaveId = this.getAttribute('data-id');
+            currentLeaveId = leaveId;
+            
+            // Get the row data
+            const row = this.closest('tr');
+            const employee = row.cells[0].textContent.trim();
+            const department = row.cells[1].textContent.trim();
+            const leaveType = row.cells[2].textContent.trim();
+            const startDate = row.cells[3].textContent.trim();
+            const endDate = row.cells[4].textContent.trim();
+            const days = row.cells[5].textContent.trim();
+            const statusCell = row.cells[6];
+            const status = statusCell.textContent.trim();
+            
+            // Populate the modal
+            document.getElementById('modal-employee').textContent = employee;
+            document.getElementById('modal-department').textContent = department;
+            document.getElementById('modal-leave-type').textContent = leaveType;
+            document.getElementById('modal-start-date').textContent = startDate;
+            document.getElementById('modal-end-date').textContent = endDate;
+            document.getElementById('modal-days').textContent = days;
+            document.getElementById('modal-status').textContent = status;
+            document.getElementById('modal-applied-date').textContent = new Date().toLocaleDateString();
+            document.getElementById('modal-reason').textContent = 'Loading...';
+            
+            // Set status class
+            const modalStatus = document.getElementById('modal-status');
+            modalStatus.className = '';
+            modalStatus.classList.add('status', action + 'd');
+            
+            // Show comments
+            const commentsRow = document.getElementById('modal-comments-row');
+            commentsRow.style.display = 'flex';
+            document.getElementById('modal-comments').textContent = comments || `Leave request has been ${statusText.toLowerCase()}.`;
+            
+            // Hide action buttons
+            document.getElementById('modal-approve-btn').style.display = 'none';
+            document.getElementById('modal-reject-btn').style.display = 'none';
+            document.getElementById('response-form').style.display = 'none';
+            
+            // Fetch additional details
+            fetch(`/api/leave/${leaveId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('modal-applied-date').textContent = new Date(data.applied_date).toLocaleDateString();
+                    document.getElementById('modal-reason').textContent = data.reason;
+                    document.getElementById('modal-comments').textContent = data.comments || `Leave request has been ${statusText.toLowerCase()}.`;
+                })
+                .catch(error => {
+                    console.error('Error fetching leave details:', error);
+                });
+            
+            leaveModal.style.display = 'block';
+        });
+        
+        // Update data attributes for filtering
+        row.setAttribute('data-status', action === 'approve' ? 'approved' : 'rejected');
+        
+        // If filters are active, apply them
+        if (typeof applyFilters === 'function') {
+            applyFilters();
+        }
+    }
+});
+    </script>
 </html>
 

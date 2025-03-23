@@ -11,6 +11,10 @@ urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('leave/', views.leave_view, name='leave'),
     path('settings/', views.settings_view, name='settings'),
+    path('request-leave/', views.request_leave_view, name='request_leave'),
+    path('manager/leaves/', views.manager_leaves_view, name='manager_leaves_view'),
+    path('manager/leave/<int:leave_id>/<str:action>/', views.leave_action_view, name='leave_action'),
+   
 ]
 
 

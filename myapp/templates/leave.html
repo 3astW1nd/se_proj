@@ -109,7 +109,7 @@
                                 </div>
                                 {% endif %}
                                 
-                                <form method="post" class="leave-application-form">
+                                <form method="post" action="{% url 'request_leave' %}" class="leave-application-form">
                                     {% csrf_token %}
                                     
                                     <div class="form-group">
@@ -376,6 +376,8 @@
                 });
             });
         });
+
+    
     </script>
 </body>
 </html>

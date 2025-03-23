@@ -1,5 +1,11 @@
-from django.shortcuts import render, redirect
-from myapp.models import Employee
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.contrib import messages
+from .models import Employee, Leave
+from django.db.models import Q
+from django.http import JsonResponse
+
 
 def home(request):
     return render(request, "index.html")  # Renders the login page
@@ -84,8 +90,8 @@ def leave_view(request):
     user_id = request.session.get("user_id")
     try:
         employee = Employee.objects.get(id=user_id)
-        if employee.check_role() == "Admin": 
-            return render(request, "admin_leave.html")
+        if employee.check_role() == "Manager": 
+            return manager_leaves_view(request)
         elif employee.check_role() == "HR":
             return render(request, "hr_leave.html")
         else:
@@ -97,3 +103,204 @@ def leave_view(request):
 
 def settings_view(request):
     return render(request, "settings.html")
+
+# ---------------- Leaves View ----------------
+def request_leave_view(request):
+    """View for employees to request leave"""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login")
+    
+    try:
+        employee = Employee.objects.get(id=user_id)
+        
+        # Handle form submission
+        if request.method == "POST":
+            # Get form data
+            leave_type = request.POST.get("leave_type")
+            start_date = request.POST.get("start_date")
+            end_date = request.POST.get("end_date")
+            reason = request.POST.get("reason")
+            
+            # Validate form data
+            if not all([leave_type, start_date, end_date, reason]):
+                return render(request, "leave.html", {
+                    "employee": employee,
+                    "error_message": "All fields are required",
+                    "form_data": request.POST  # Return form data to repopulate the form
+                })
+            
+            # Calculate number of days
+            from datetime import datetime
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            end = datetime.strptime(end_date, "%Y-%m-%d")
+            days = (end - start).days + 1  # Include both start and end days
+            
+            # Validate date range
+            if days < 1:
+                return render(request, "leave.html", {
+                    "employee": employee,
+                    "error_message": "End date must be after start date",
+                    "form_data": request.POST
+                })
+            
+            # Create and save the leave request
+            leave = Leave(
+                employee=employee,
+                leave_type=leave_type,
+                start_date=start_date,
+                end_date=end_date,
+                status="Pending",  # Default status is pending
+                requested_on=timezone.now()
+            )
+            leave.save()
+            
+            # Return success message
+            return render(request, "leave.html", {
+                "employee": employee,
+                "success_message": "Leave request submitted successfully!",
+                "leave_requests": Leave.objects.filter(employee=employee).order_by('-requested_on')
+            })
+        
+        # GET request - display form
+        leave_requests = Leave.objects.filter(employee=employee).order_by('-requested_on')
+        return render(request, "leave.html", {
+            "employee": employee,
+            "leave_requests": leave_requests
+        })
+        
+    except Employee.DoesNotExist:
+        return redirect("login")
+    
+
+def manager_leaves_view(request):
+    """View for administrators to see all pending leave requests"""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login")
+    
+    try:
+        # Check if user is admin or HR
+        employee = Employee.objects.get(id=user_id)
+        if employee.check_role() not in ["Manager"]:
+            messages.error(request, "You don't have permission to access this page")
+            return redirect("dashboard")
+        
+        # Get filter parameters
+        department = request.GET.get('department', '')
+        leave_type = request.GET.get('leave_type', '')
+        date_from = request.GET.get('date_from', '')
+        date_to = request.GET.get('date_to', '')
+        
+        # Base query - get all pending leave requests
+        pending_requests = Leave.objects.select_related('employee')
+        
+        # Apply filters if provided
+        if department:
+            pending_requests = pending_requests.filter(employee__department=department)
+        
+        if leave_type:
+            pending_requests = pending_requests.filter(leave_type=leave_type)
+        
+        if date_from:
+            pending_requests = pending_requests.filter(start_date__gte=date_from)
+        
+        if date_to:
+            pending_requests = pending_requests.filter(end_date__lte=date_to)
+        
+        for leave in pending_requests:
+            # If days field doesn't already exist
+            if not hasattr(leave, 'days') or leave.days is None:
+                start = leave.start_date
+                end = leave.end_date
+                leave.days = (end - start).days + 1  # Include both start and end days
+
+        # Get unique departments and leave types for filter dropdowns
+        departments = Employee.objects.values_list('department', flat=True).distinct()
+        leave_types = Leave.objects.values_list('leave_type', flat=True).distinct()
+        
+        # Get counts for dashboard stats
+        pending_count = Leave.objects.filter(status="Pending").count()
+        approved_count = Leave.objects.filter(status="Approved").count()
+        rejected_count = Leave.objects.filter(status="Rejected").count()
+        
+        # Get employees currently on leave (approved leaves that include today's date)
+        from django.utils import timezone
+        today = timezone.now().date()
+        on_leave_count = Leave.objects.filter(
+            status="Approved",
+            start_date__lte=today,
+            end_date__gte=today
+        ).count()
+        
+        context = {
+            'employee': employee,
+            'pending_requests': pending_requests,
+            'departments': departments,
+            'leave_types': leave_types,
+            'filters': {
+                'department': department,
+                'leave_type': leave_type,
+                'date_from': date_from,
+                'date_to': date_to,
+            },
+            'stats': {
+                'pending_count': pending_count,
+                'approved_count': approved_count,
+                'rejected_count': rejected_count,
+                'on_leave_count': on_leave_count,
+            }
+        }
+        
+        return render(request, "manager_leave.html", context)
+        
+    except Employee.DoesNotExist:
+        return redirect("login")
+    
+
+
+def leave_action_view(request, leave_id, action):
+    """View for approving or rejecting leave requests"""
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method"}, status=405)
+    
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "User not authenticated"}, status=401)
+
+    try:
+        # Check if user is a Manager
+        employee = Employee.objects.get(id=user_id)
+        if employee.check_role() != "Manager":
+            return JsonResponse({"error": "You don't have permission to perform this action"}, status=403)
+
+        # Get the leave request
+        leave_request = get_object_or_404(Leave, id=leave_id)
+
+        # Check if leave is already processed
+        if leave_request.status != "Pending":
+            return JsonResponse({"message": f"This leave request has already been {leave_request.status.lower()}."}, status=400)
+
+        # Process the action
+        if action == "approve":
+            leave_request.status = "Approved"
+            success_message = "Leave request approved successfully."
+        elif action == "reject":
+            leave_request.status = "Rejected"
+            success_message = "Leave request rejected successfully."
+        else:
+            return JsonResponse({"error": "Invalid action"}, status=400)
+
+        
+        # Update approval details
+        leave_request.manager = employee
+        leave_request.approved_on = timezone.now()
+        leave_request.save()
+
+        return JsonResponse({"success": True, "message": success_message})
+
+    except Employee.DoesNotExist:
+        return JsonResponse({"error": "User not found"}, status=404)
+
+    except Leave.DoesNotExist:
+        return JsonResponse({"error": "Leave request not found"}, status=404)

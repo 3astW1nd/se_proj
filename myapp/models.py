@@ -20,7 +20,7 @@ class Employee(models.Model):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Employee')
     department = models.CharField(max_length=50, blank=True, null=True)
     date_joined = models.DateField(auto_now_add=True)
-
+        
     def set_password(self, raw_password):
         """Hashes and sets the password"""
         self.password = make_password(raw_password)
@@ -35,3 +35,39 @@ class Employee(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.role})"
+
+
+class Leave(models.Model):
+    STATUS_CHOICES = (
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+    )
+
+    leave_type = models.CharField(max_length=50)
+    employee = models.ForeignKey('myapp.Employee', on_delete=models.CASCADE, related_name="leaves")
+    start_date = models.DateField()
+    end_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    manager = models.ForeignKey('myapp.Employee', on_delete=models.SET_NULL, null=True, blank=True, related_name="managed_leaves")
+    requested_on = models.DateField(auto_now_add=True)
+    approved_on = models.DateField(null=True, blank=True)
+
+    class Meta:
+        db_table = "myapp_leaves" 
+
+    def approve(self, manager):
+        """Approve the leave request"""
+        self.status = 'Approved'
+        self.manager = manager
+        self.approved_on = models.DateField(auto_now=True)
+        self.save()
+
+    def reject(self, manager):
+        """Reject the leave request"""
+        self.status = 'Rejected'
+        self.manager = manager
+        self.save()
+
+    def __str__(self):
+        return f"{self.employee.first_name} {self.employee.last_name} - {self.leave_type} ({self.status})"
