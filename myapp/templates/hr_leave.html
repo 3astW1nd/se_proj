@@ -590,40 +590,7 @@
                     <h1>Leave Reports</h1>
                     <p>Generate and analyze employee leave trends</p>
                 </div>
-                
-                <div class="stats-cards">
-                    <div class="card">
-                        <div class="card-icon">📅</div>
-                        <div class="card-info">
-                            <h3>Total Leave Days (YTD)</h3>
-                            <p class="amount">1,248</p>
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-icon">🌴</div>
-                        <div class="card-info">
-                            <h3>Annual Leave Usage</h3>
-                            <p class="amount">68%</p>
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-icon">🏥</div>
-                        <div class="card-info">
-                            <h3>Sick Leave Usage</h3>
-                            <p class="amount">42%</p>
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-icon">⚠️</div>
-                        <div class="card-info">
-                            <h3>Unplanned Absences</h3>
-                            <p class="amount">156</p>
-                        </div>
-                    </div>
-                </div>
+               
                 
                 <div class="grid-item">
                     <div class="item-header">
@@ -632,30 +599,6 @@
                     <div class="item-content">
                         <div class="filter-section">
                             <h3>Report Filters</h3>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="report-type">Report Type</label>
-                                    <select id="report-type">
-                                        <option value="summary">Leave Summary</option>
-                                        <option value="detailed">Detailed Leave Report</option>
-                                        <option value="department">Department Analysis</option>
-                                        <option value="trends">Leave Trends</option>
-                                        <option value="balance">Leave Balance</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="date-range">Date Range</label>
-                                    <select id="date-range">
-                                        <option value="current-month">Current Month</option>
-                                        <option value="last-month">Last Month</option>
-                                        <option value="current-quarter">Current Quarter</option>
-                                        <option value="last-quarter">Last Quarter</option>
-                                        <option value="ytd">Year to Date</option>
-                                        <option value="last-year">Last Year</option>
-                                        <option value="custom">Custom Range</option>
-                                    </select>
-                                </div>
-                            </div>
                             <div class="form-row" id="custom-date-range" style="display: none;">
                                 <div class="form-group">
                                     <label for="start-date">Start Date</label>
@@ -670,19 +613,18 @@
                                 <div class="form-group">
                                     <label for="department">Department</label>
                                     <select id="department">
-                                        <option value="all">All Departments</option>
-                                        <option value="development">Development</option>
-                                        <option value="design">Design</option>
-                                        <option value="marketing">Marketing</option>
-                                        <option value="sales">Sales</option>
-                                        <option value="hr">HR</option>
-                                        <option value="finance">Finance</option>
+                                        <option value="all" selected>All Departments</option>
+                                        <option value="Operations">Operations</option>
+                                        <option value="HR">Human Resources</option>
+                                        <option value="Marketing">Marketing</option>
+                                        <option value="Finance">Finance</option>
+                                        <option value="IT">Information Technology</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="leave-type">Leave Type</label>
                                     <select id="leave-type">
-                                        <option value="all">All Leave Types</option>
+                                        <option value="all" selected>All Leave Types</option>
                                         <option value="annual">Annual Leave</option>
                                         <option value="sick">Sick Leave</option>
                                         <option value="personal">Personal Leave</option>
@@ -694,7 +636,6 @@
                             </div>
                             <div class="filter-buttons">
                                 <button class="btn" id="generate-report">Generate Report</button>
-                                <button class="btn" id="save-filter" style="background-color: #95a5a6;">Save Filter</button>
                             </div>
                         </div>
                     </div>
@@ -703,18 +644,13 @@
                 <div id="report-results" class="grid-item" style="display: none;">
                     <div class="item-header">
                         <h2>Report Results</h2>
-                        <div class="report-actions">
-                            <button class="btn btn-export" id="export-excel">Export to Excel</button>
-                            <button class="btn btn-export" id="export-pdf">Export to PDF</button>
-                            <button class="btn btn-print" id="print-report">Print</button>
-                        </div>
+                       
                     </div>
                     <div class="item-content">
                         <div class="tab-container">
                             <div class="tabs">
                                 <div class="tab active" data-tab="overview">Overview</div>
                                 <div class="tab" data-tab="details">Details</div>
-                                <div class="tab" data-tab="charts">Charts</div>
                             </div>
                             
                             <div class="tab-content active" id="overview-tab">
@@ -725,217 +661,126 @@
                                         <div class="summary-value">Leave Summary</div>
                                     </div>
                                     <div class="summary-item">
-                                        <div class="summary-label">Date Range:</div>
-                                        <div class="summary-value">January 1, 2023 - March 31, 2023</div>
-                                    </div>
-                                    <div class="summary-item">
-                                        <div class="summary-label">Total Employees:</div>
-                                        <div class="summary-value">124</div>
-                                    </div>
-                                    <div class="summary-item">
                                         <div class="summary-label">Total Leave Days:</div>
-                                        <div class="summary-value">356</div>
+                                        <div class="summary-value">{{ totals.total_days }}</div>
                                     </div>
                                     <div class="summary-item">
                                         <div class="summary-label">Average Leave Days per Employee:</div>
-                                        <div class="summary-value">2.87</div>
+                                        <div class="summary-value">{{ totals.avg_per_employee }}</div>
                                     </div>
                                 </div>
-                                
-                                <div class="chart-container">
-                                    <div class="chart-placeholder">
-                                        Leave by Department Chart
-                                    </div>
-                                </div>
-                                
-                                <div class="chart-container">
-                                    <div class="chart-placeholder">
-                                        Leave by Type Chart
-                                    </div>
-                                </div>
+                               
                             </div>
                             
-                            <div class="tab-content" id="details-tab">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Department</th>
-                                            <th>Annual Leave</th>
-                                            <th>Sick Leave</th>
-                                            <th>Personal Leave</th>
-                                            <th>Other Leave</th>
-                                            <th>Total Days</th>
-                                            <th>Avg. per Employee</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>Development</td>
-                                            <td>78</td>
-                                            <td>42</td>
-                                            <td>15</td>
-                                            <td>5</td>
-                                            <td>140</td>
-                                            <td>3.5</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Design</td>
-                                            <td>45</td>
-                                            <td>18</td>
-                                            <td>8</td>
-                                            <td>2</td>
-                                            <td>73</td>
-                                            <td>3.0</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Marketing</td>
-                                            <td>32</td>
-                                            <td>15</td>
-                                            <td>6</td>
-                                            <td>0</td>
-                                            <td>53</td>
-                                            <td>2.4</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Sales</td>
-                                            <td>28</td>
-                                            <td>22</td>
-                                            <td>5</td>
-                                            <td>3</td>
-                                            <td>58</td>
-                                            <td>2.6</td>
-                                        </tr>
-                                        <tr>
-                                            <td>HR</td>
-                                            <td>12</td>
-                                            <td>5</td>
-                                            <td>3</td>
-                                            <td>0</td>
-                                            <td>20</td>
-                                            <td>2.0</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Finance</td>
-                                            <td>8</td>
-                                            <td>3</td>
-                                            <td>1</td>
-                                            <td>0</td>
-                                            <td>12</td>
-                                            <td>1.5</td>
-                                        </tr>
-                                    </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <td><strong>Total</strong></td>
-                                            <td><strong>203</strong></td>
-                                            <td><strong>105</strong></td>
-                                            <td><strong>38</strong></td>
-                                            <td><strong>10</strong></td>
-                                            <td><strong>356</strong></td>
-                                            <td><strong>2.87</strong></td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
+                            <table class="data-table" id ="details-tab">
+                                <thead>
+                                    <tr>
+                                        <th>Department</th>
+                                        <th>Annual Leave</th>
+                                        <th>Sick Leave</th>
+                                        <th>Personal Leave</th>
+                                        <th>Other Leave</th>
+                                        <th>Total Days</th>
+                                        <th>Avg. per Employee</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for department in leave_summary %}
+                                    <tr>
+                                        <td>{{ department.employee__department }}</td>
+                                        <td>{{ department.annual_leave|default:"0" }}</td>
+                                        <td>{{ department.sick_leave|default:"0" }}</td>
+                                        <td>{{ department.personal_leave|default:"0" }}</td>
+                                        <td>{{ department.other_leave|default:"0" }}</td>
+                                        <td>{{ department.total_days|default:"0" }}</td>
+                                        <td>{{ department.avg_per_employee|default:"0" }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" style="text-align:center;">No leave records found</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td><strong>Total</strong></td>
+                                        <td><strong>{{ totals.annual_leave }}</strong></td>
+                                        <td><strong>{{ totals.sick_leave }}</strong></td>
+                                        <td><strong>{{ totals.personal_leave }}</strong></td>
+                                        <td><strong>{{ totals.other_leave }}</strong></td>
+                                        <td><strong>{{ totals.total_days }}</strong></td>
+                                        <td><strong>{{ totals.avg_per_employee }}</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                             
-                            <div class="tab-content" id="charts-tab">
-                                <div class="chart-container">
-                                    <div class="chart-placeholder">
-                                        Monthly Leave Trends Chart
-                                    </div>
-                                </div>
-                                
-                                <div class="chart-container">
-                                    <div class="chart-placeholder">
-                                        Leave Distribution by Employee Chart
-                                    </div>
-                                </div>
-                                
-                                <div class="chart-container">
-                                    <div class="chart-placeholder">
-                                        Leave Type Comparison Chart
-                                    </div>
-                                </div>
-                            </div>
+                            
+                            
                         </div>
                     </div>
                 </div>
                 
-                <div class="grid-item">
-                    <div class="item-header">
-                        <h2>Saved Reports</h2>
-                    </div>
-                    <div class="item-content">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Report Name</th>
-                                    <th>Type</th>
-                                    <th>Date Range</th>
-                                    <th>Created On</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Q1 Department Analysis</td>
-                                    <td>Department Analysis</td>
-                                    <td>Jan 1, 2023 - Mar 31, 2023</td>
-                                    <td>Apr 2, 2023</td>
-                                    <td>
-                                        <button class="btn-small">View</button>
-                                        <button class="btn-small btn-export">Export</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Annual Leave Trends 2022</td>
-                                    <td>Leave Trends</td>
-                                    <td>Jan 1, 2022 - Dec 31, 2022</td>
-                                    <td>Jan 15, 2023</td>
-                                    <td>
-                                        <button class="btn-small">View</button>
-                                        <button class="btn-small btn-export">Export</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Development Team Leave Balance</td>
-                                    <td>Leave Balance</td>
-                                    <td>Current</td>
-                                    <td>Mar 10, 2023</td>
-                                    <td>
-                                        <button class="btn-small">View</button>
-                                        <button class="btn-small btn-export">Export</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Sick Leave Analysis</td>
-                                    <td>Detailed Leave Report</td>
-                                    <td>Jan 1, 2023 - Mar 31, 2023</td>
-                                    <td>Apr 5, 2023</td>
-                                    <td>
-                                        <button class="btn-small">View</button>
-                                        <button class="btn-small btn-export">Export</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Monthly Leave Summary</td>
-                                    <td>Leave Summary</td>
-                                    <td>Mar 1, 2023 - Mar 31, 2023</td>
-                                    <td>Apr 1, 2023</td>
-                                    <td>
-                                        <button class="btn-small">View</button>
-                                        <button class="btn-small btn-export">Export</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                
             </div>
         </main>
     </div>
     
-    
+    <script>
+
+document.getElementById("generate-report").addEventListener("click", function () {
+    const selectedDepartment = document.getElementById("department").value;
+    const selectedLeaveType = document.getElementById("leave-type").value;
+
+    console.log("Selected Department:", selectedDepartment);
+    console.log("Selected Leave Type:", selectedLeaveType);
+
+    // Fetch filtered report data from the server
+    fetch(`/get-leave-report?department=${selectedDepartment}&leave_type=${selectedLeaveType}`)
+        .then(response => response.json())
+        .then(data => {
+            updateReportTable(data.report);
+            updateTotalRow(data.totals);
+            document.getElementById("report-results").style.display = "block";
+            document.getElementById("report-results").scrollIntoView({ behavior: "smooth" });
+        })
+        .catch(error => console.error("Error fetching report:", error));
+});
+
+function updateReportTable(reportData) {
+    const tableBody = document.querySelector(".data-table tbody");
+    tableBody.innerHTML = ""; // Clear existing rows
+
+    reportData.forEach(row => {
+        const newRow = document.createElement("tr");
+        newRow.innerHTML = `
+            <td>${row.department}</td>
+            <td>${row.annual_leave}</td>
+            <td>${row.sick_leave}</td>
+            <td>${row.personal_leave}</td>
+            <td>${row.other_leave}</td>
+            <td>${row.total_days}</td>
+            <td>${row.avg_per_employee}</td>
+        `;
+        tableBody.appendChild(newRow);
+    });
+}
+
+function updateTotalRow(totals) {
+    document.querySelector("tfoot td:nth-child(2) strong").textContent = totals.annual_leave || 0;
+    document.querySelector("tfoot td:nth-child(3) strong").textContent = totals.sick_leave || 0;
+    document.querySelector("tfoot td:nth-child(4) strong").textContent = totals.personal_leave || 0;
+    document.querySelector("tfoot td:nth-child(5) strong").textContent = totals.other_leave || 0;
+    document.querySelector("tfoot td:nth-child(6) strong").textContent = totals.total_days || 0;
+    document.querySelector("tfoot td:nth-child(7) strong").textContent = totals.avg_per_employee || 0;
+}
+
+
+    </script>
+
+
+
+
+
 </body>
 </html>
 

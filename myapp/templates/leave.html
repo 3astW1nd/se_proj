@@ -56,41 +56,6 @@
                     <p>Apply for leave and track your leave history</p>
                 </div>
                 
-                <div class="leave-stats">
-                    <div class="stats-cards">
-                        <div class="card">
-                            <div class="card-icon">🌴</div>
-                            <div class="card-info">
-                                <h3>Annual Leave</h3>
-                                <p class="amount">{{ leave_balance.annual|default:"15" }} days</p>
-                            </div>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-icon">🏥</div>
-                            <div class="card-info">
-                                <h3>Sick Leave</h3>
-                                <p class="amount">{{ leave_balance.sick|default:"10" }} days</p>
-                            </div>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-icon">👤</div>
-                            <div class="card-info">
-                                <h3>Personal Leave</h3>
-                                <p class="amount">{{ leave_balance.personal|default:"5" }} days</p>
-                            </div>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-icon">📅</div>
-                            <div class="card-info">
-                                <h3>Total Balance</h3>
-                                <p class="amount">{{ user.employee.leave_balance|default:"30" }} days</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 
                 <div class="leave-container">
                     <div class="leave-form">
@@ -192,9 +157,7 @@
                                                 <td><span class="status {{ leave.status|lower }}">{{ leave.status }}</span></td>
                                                 <td>
                                                     <button class="btn-small view-details" data-id="{{ leave.id }}">Details</button>
-                                                    {% if leave.status == 'Pending' %}
-                                                    <button class="btn-small cancel-btn" data-id="{{ leave.id }}">Cancel</button>
-                                                    {% endif %}
+                                                    
                                                 </td>
                                             </tr>
                                             {% endfor %}
@@ -342,18 +305,7 @@
             });
             
             // Cancel button functionality
-            const cancelButtons = document.querySelectorAll('.cancel-btn');
             
-            cancelButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const leaveId = this.getAttribute('data-id');
-                    if (confirm('Are you sure you want to cancel this leave request?')) {
-                        // In a real application, you would send a request to the server
-                        // For now, we'll just show an alert
-                        alert('Leave request cancelled successfully!');
-                    }
-                });
-            });
             
             // Status filter functionality
             const statusFilter = document.getElementById('status-filter');
