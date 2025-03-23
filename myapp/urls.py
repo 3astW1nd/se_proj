@@ -8,6 +8,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('login/', views.login_view, name='login'),
     path('payroll/', views.payroll_view, name='payroll'),
+    path('salary/', views.salary_view, name='salary'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('leave/', views.leave_view, name='leave'),
     path('settings/', views.settings_view, name='settings'),
@@ -17,6 +18,8 @@ urlpatterns = [
     path('manager/leave/<int:leave_id>/<str:action>/', views.leave_action_view, name='leave_action'),
     path("leave-summary/", views.leave_summary_view, name="leave_summary"),
     path("get-leave-report/", views.get_leave_report, name="get_leave_report"),
+    path('submit_salary', views.submit_salary, name='submit_salary')
+   
 ]
 
 

@@ -7,6 +7,11 @@ from django.db.models import Sum, Count, Q, F, ExpressionWrapper, fields, Intege
 from django.http import JsonResponse
 from django.db.models.functions import ExtractDay
 
+from django.db.models import Q
+from django.http import JsonResponse
+from .models import Employee, Leave, Salary
+from decimal import Decimal
+from django.views.decorators.csrf import csrf_exempt
 
 
 def home(request):
@@ -87,6 +92,68 @@ def dashboard_view(request):
 def payroll_view(request):
     return render(request, 'payroll.html')
 
+def salary_view(request):
+    return render(request, 'salary.html')
+
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from decimal import Decimal
+from django.db import connection
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+
+def salary_view(request):
+    return render(request, 'salary.html')
+
+@csrf_exempt  # For testing only, use proper CSRF protection in production
+def submit_salary(request):
+    if request.method != "POST":
+        return redirect("salary")
+    
+    # Get form data
+    employee_id = request.POST.get("employee_id")
+    basic_salary = request.POST.get("salary")
+    tax_percentage = request.POST.get("tax")
+    date = request.POST.get("date") or timezone.now().strftime('%Y-%m-%d')
+    
+    # Validate data
+    if not all([employee_id, basic_salary, tax_percentage]):
+        messages.error(request, "All fields are required")
+        return redirect("salary")
+        
+    try:
+        # Convert to proper data types
+        employee_id = int(employee_id)
+        basic_salary = Decimal(basic_salary)
+        tax_percentage = Decimal(tax_percentage)
+        
+        # Calculate tax amount
+        tax_amount = (basic_salary * tax_percentage) / Decimal('100.0')
+        
+        # Calculate net pay
+        net_pay = basic_salary - tax_amount
+        
+        # Insert directly into database using raw SQL
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO salary 
+                (employee_id, basic_salary, tax, net_pay, generated_on) 
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                [employee_id, basic_salary, tax_amount, net_pay, date]
+            )
+        
+        messages.success(request, f"Salary of ${basic_salary} processed successfully for employee ID {employee_id}")
+        return redirect("salary")
+        
+    except (ValueError, TypeError):
+        messages.error(request, "Invalid numeric values provided")
+        return redirect("salary")
+    except Exception as e:
+        messages.error(request, f"Error: {str(e)}")
+        return redirect("salary")
 
 def leave_view(request):
     user_id = request.session.get("user_id")
