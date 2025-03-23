@@ -624,13 +624,20 @@
                 </div>
             </div>
             <ul class="nav-links">
-                <li><a href="{% url 'dashboard' %}"><span class="icon">📊</span> Dashboard</a></li>
+                <li ><a href="#"><span class="icon">📊</span> Dashboard</a></li>
                 <li><a href="{% url 'payroll' %}"><span class="icon">💰</span> Payroll</a></li>
-                <li class="active"><a href="#"><span class="icon">🗓️</span> Leave Management</a></li>
-                <li><a href="#"><span class="icon">👥</span> Employees</a></li>
-                <li><a href="#"><span class="icon">⚙️</span> Settings</a></li>
+                {% if employee.role == "Manager" %}
+                <li><a href="{% url 'salary' %}"><span class="icon">💰</span> Salary Management</a></li>
+                {% endif %}
+                {% if employee.role != "Admin" %}
+                <li class="active"><a href="{% url 'leave' %}"><span class="icon">🗓️</span> Leave Management</a></li>
+                {% endif %}
+                {% if employee.role == "Admin" %} 
+                <li><a href="{% url 'employee' %}"><span class="icon">👥</span> Employees</a></li>
+                <li><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
+                {% endif %}
                 <li><a href="{% url 'logout' %}"><span class="icon">🚪</span> Logout</a></li>
-            </ul>
+             </ul>
         </nav>
         
         <main class="main-content">

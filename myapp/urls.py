@@ -20,8 +20,14 @@ urlpatterns = [
     path('manager/leave/<int:leave_id>/<str:action>/', views.leave_action_view, name='leave_action'),
     path("leave-summary/", views.leave_summary_view, name="leave_summary"),
     path("get-leave-report/", views.get_leave_report, name="get_leave_report"),
-    path('submit_salary', views.submit_salary, name='submit_salary')
-   
+    path('submit_salary', views.submit_salary, name='submit_salary'),
+    path('settings/update_profile/', views.update_profile, name='update_profile'),
+    path('settings/update_profile_pass/', views.update_profile_pass, name='update_profile_pass'),
+    path('employee/', views.employee_view, name='employee'),
+    path('employee/manage/', views.employee_manage_view, name='employee_manage'),
+    path('employee/update-role/<int:employee_id>/', views.update_employee_role, name='update_employee_role'),
+    path('employee/details/<int:employee_id>/', views.get_employee_details, name='get_employee_details'),
+    
 ]
 
 

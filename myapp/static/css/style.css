@@ -1155,4 +1155,182 @@ textarea:focus {
     .notification-toggle {
         margin-bottom: 10px;
     }
+    :root {
+        --primary-color: #3498db;
+        --secondary-color: #2ecc71;
+        --warning-color: #e74c3c;
+        --dark-color: #2c3e50;
+    }
+
+    .employee-management-container {
+        width: 100%;
+    }
+
+    .employee-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .employee-table th,
+    .employee-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .employee-table th {
+        font-weight: 600;
+        color: #777;
+        background-color: #f9f9f9;
+    }
+
+    .employee-table tbody tr:hover {
+        background-color: #f5f7fa;
+    }
+
+    .role-select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: white;
+        font-size: 14px;
+    }
+
+    .save-role-btn {
+        margin-top: 5px;
+        padding: 5px 10px;
+        background-color: var(--secondary-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .save-role-btn:hover {
+        background-color: #27ae60;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+    }
+
+    .view-details-btn {
+        background-color: var(--primary-color);
+    }
+
+    .view-details-btn:hover {
+        background-color: #2980b9;
+    }
+
+    .edit-btn {
+        background-color: var(--warning-color);
+    }
+
+    .edit-btn:hover {
+        background-color: #e67e22;
+    }
+
+    /* Employee Details Modal Styles */
+    .employee-profile {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .employee-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-right: 20px;
+    }
+
+    .employee-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .employee-info h3 {
+        margin: 0 0 5px 0;
+        font-size: 20px;
+        color: var(--dark-color);
+    }
+
+    .employee-info p {
+        margin: 0;
+        color: #777;
+    }
+
+    .employee-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .detail-section {
+        margin-bottom: 20px;
+    }
+
+    .detail-section h4 {
+        margin: 0 0 15px 0;
+        font-size: 16px;
+        color: var(--dark-color);
+        padding-bottom: 5px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .detail-row {
+        display: flex;
+        margin-bottom: 10px;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        width: 120px;
+        color: #777;
+    }
+
+    .detail-value {
+        flex: 1;
+    }
+
+    /* Responsive styles */
+    @media (max-width: 992px) {
+        .employee-details {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .employee-table {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .employee-profile {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .employee-avatar {
+            margin-right: 0;
+            margin-bottom: 15px;
+        }
+        
+        .detail-row {
+            flex-direction: column;
+        }
+        
+        .detail-label {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+    }
+
 }

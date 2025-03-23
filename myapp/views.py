@@ -6,7 +6,7 @@ from .models import Employee, Leave
 from django.db.models import Sum, Count, Q, F, ExpressionWrapper, fields, IntegerField
 from django.http import JsonResponse
 from django.db.models.functions import ExtractDay
-
+from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import Q
 from django.http import JsonResponse
 from .models import Employee, Leave, Salary
@@ -66,6 +66,7 @@ def login_view(request):
         email = request.POST.get("email")
         password = request.POST.get("password")
 
+        
         try:
             employee = Employee.objects.get(email=email)
             if employee.check_password(password):  # Securely check password
@@ -139,6 +140,7 @@ def payroll_view(request):
             'user': {
                 'get_full_name': f"{employee.first_name} {employee.last_name}",
                 'employee': employee,
+            
             },
             'payslips': payslips,
             'selected_payslip': selected_payslip,
@@ -351,7 +353,12 @@ def leave_view(request):
     
 
 def settings_view(request):
-    return render(request, "settings.html")
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login")
+    
+    employee = Employee.objects.get(id=user_id)
+    return render(request, "settings.html", {"user": employee})
 
 # ---------------- Leaves View ----------------
 from django.shortcuts import redirect
@@ -655,3 +662,170 @@ def get_leave_report(request):
     }
 
     return JsonResponse({"report": result, "totals": totals}, safe=False)
+
+from django.contrib.auth.decorators import login_required
+
+def update_profile(request):
+
+    print("Hiiii")
+    if request.method == 'POST':
+        employee_id = request.session.get("user_id")
+    
+        print("Emp ", employee_id)
+        try:
+            employee = Employee.objects.get(id=employee_id)  # Fetch user by email
+        except Employee.DoesNotExist:
+            return redirect('settings')
+        
+        # Ensure the user is authenticated
+        employee.first_name = request.POST.get('first_name', employee.first_name)
+        employee.last_name = request.POST.get('last_name', employee.last_name)
+        employee.email = request.POST.get('email', employee.email)
+        employee.save()
+        
+    return render(request, 'settings.html', {"user": employee})
+
+def update_profile_pass(request):
+    if request.method == 'POST':
+        employee_id = request.session.get("user_id")
+
+        try:
+            employee = Employee.objects.get(id=employee_id)
+        except Employee.DoesNotExist:
+            messages.error(request, "User not found.")
+            return redirect('settings')
+
+        # Get form data
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        # Verify current password
+        if not check_password(current_password, employee.password):
+            messages.error(request, "Current password is incorrect.")
+            return redirect('settings')
+
+        # Validate new password
+        if new_password != confirm_password:
+            messages.error(request, "New password and confirmation do not match.")
+            return redirect('settings')
+
+       
+        # Update password
+        employee.password = make_password(new_password)  # Hash the password
+        employee.save()
+
+        messages.success(request, "Password updated successfully.")
+        return redirect('settings')
+
+    return render(request, 'settings.html', {"user": employee})
+
+
+login_required
+def employee_manage_view(request):
+    # Check if the user is an admin
+    try:
+        employee = request.user.employee
+        if employee.role != 'Admin':
+            messages.error(request, 'You do not have permission to access this page')
+            return redirect('dashboard')
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee profile not found')
+        logout(request)
+        return redirect('login')
+    
+    # Get all employees except admins
+    employees = Employee.objects.exclude(role='Admin').select_related('user')
+    
+    context = {
+        'employees': employees,
+    }
+    
+    return render(request, 'employee_manage.html', context)
+
+@login_required
+def update_employee_role(request, employee_id):
+    # Check if the user is an admin
+    try:
+        current_employee = request.user.employee
+        if current_employee.role != 'Admin':
+            messages.error(request, 'You do not have permission to perform this action')
+            return redirect('dashboard')
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee profile not found')
+        logout(request)
+        return redirect('login')
+    
+    if request.method == 'POST':
+        try:
+            # Get the employee to update
+            employee = Employee.objects.get(id=employee_id)
+            
+            # Get the new role from the form
+            new_role = request.POST.get('role')
+            
+            # Validate the role
+            valid_roles = ['HR', 'Manager', 'Employee']
+            if new_role not in valid_roles:
+                messages.error(request, 'Invalid role selected')
+                return redirect('employee_manage')
+            
+            # Update the employee's role
+            employee.role = new_role
+            employee.save()
+            
+            messages.success(request, f'Role updated successfully for {employee.user.get_full_name()}')
+        except Employee.DoesNotExist:
+            messages.error(request, 'Employee not found')
+        except Exception as e:
+            messages.error(request, f'Error updating role: {str(e)}')
+    
+    return redirect('employee_manage')
+
+@login_required
+def get_employee_details(request, employee_id):
+    # Check if the user is an admin
+    try:
+        current_employee = request.user.employee
+        if current_employee.role != 'Admin':
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+    except Employee.DoesNotExist:
+        return JsonResponse({'error': 'Employee profile not found'}, status=404)
+    
+    try:
+        # Get the employee details
+        employee = Employee.objects.select_related('user').get(id=employee_id)
+        
+        # Create a dictionary with employee details
+        employee_data = {
+            'id': employee.id,
+            'employee_id': employee.employee_id,
+            'name': employee.user.get_full_name(),
+            'email': employee.user.email,
+            'department': employee.department,
+            'position': employee.position or '',
+            'role': employee.role,
+            'phone': employee.phone or '',
+            'address': employee.address or '',
+            'join_date': employee.join_date.strftime('%Y-%m-%d') if employee.join_date else '',
+            'emergency_contact_name': employee.emergency_contact_name or '',
+            'emergency_contact_phone': employee.emergency_contact_phone or '',
+            'emergency_contact_relation': employee.emergency_contact_relation or '',
+        }
+        
+        return JsonResponse(employee_data)
+    except Employee.DoesNotExist:
+        return JsonResponse({'error': 'Employee not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def employee_view(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login")
+    
+    employees = Employee.objects.all()
+    emp = Employee.objects.get(id = user_id)
+    print(emp)
+    return render(request, "employee.html", {"users": employees, "user": emp})
