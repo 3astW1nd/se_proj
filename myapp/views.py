@@ -7,7 +7,12 @@ from django.http import JsonResponse
 from .models import Employee, Leave, Salary
 from decimal import Decimal
 from django.views.decorators.csrf import csrf_exempt
-
+from django.http import HttpResponse
+from django.shortcuts import redirect
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
 
 def home(request):
     return render(request, "index.html")  # Renders the login page
@@ -83,9 +88,151 @@ def dashboard_view(request):
     employee = Employee.objects.get(id=user_id)
     return render(request, "index.html", {"employee": employee})
 
-
 def payroll_view(request):
-    return render(request, 'payroll.html')
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login")
+    
+    try:
+        employee = Employee.objects.get(id=user_id)
+        
+        # Fetch all salary records for the current employee
+        payslips = Salary.objects.filter(employee_id=user_id).order_by('-generated_on')
+        
+        # Add month and year attributes to each payslip for display
+        for payslip in payslips:
+            payslip.month = payslip.generated_on.strftime('%B')  # Full month name
+            payslip.year = payslip.generated_on.year
+            payslip.status = "Processed"  # Default status
+            payslip.net_salary = payslip.net_pay+800  # Match the template's expected attribute
+        
+        # Get the selected payslip if ID is provided
+        selected_payslip_id = request.GET.get('id')
+        selected_payslip = None
+        
+        if selected_payslip_id:
+            try:
+                selected_payslip = Salary.objects.get(id=selected_payslip_id, employee_id=user_id)
+                selected_payslip.month = selected_payslip.generated_on.strftime('%B')
+                selected_payslip.year = selected_payslip.generated_on.year
+                selected_payslip.status = "Processed"
+                selected_payslip.net_salary = selected_payslip.net_pay+800
+                
+                # Add common deductions and allowances for display
+                selected_payslip.housing_allowance = Decimal('500.00')
+                selected_payslip.transport_allowance = Decimal('300.00')
+                selected_payslip.allowances = selected_payslip.housing_allowance + selected_payslip.transport_allowance
+                selected_payslip.deductions = selected_payslip.tax
+                selected_payslip.month = selected_payslip.generated_on.strftime('%B')
+                selected_payslip.year = selected_payslip.generated_on.year
+                selected_payslip.total_earnings = selected_payslip.basic_salary + 800
+                
+            except Salary.DoesNotExist:
+                pass
+        
+        return render(request, 'payroll.html', {
+            'user': {
+                'get_full_name': f"{employee.first_name} {employee.last_name}",
+                'employee': employee,
+            },
+            'payslips': payslips,
+            'selected_payslip': selected_payslip,
+        })
+        
+    except Employee.DoesNotExist:
+        return redirect("login")
+
+
+def download_payslip(request, payslip_id):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login")
+    
+    try:
+        employee = Employee.objects.get(id=user_id)
+        payslip = Salary.objects.get(id=payslip_id, employee_id=user_id)
+        
+        # Create a file-like buffer to receive PDF data
+        buffer = io.BytesIO()
+        
+        # Create the PDF object, using the buffer as its "file"
+        p = canvas.Canvas(buffer, pagesize=letter)
+        
+        # Add company header
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(1 * inch, 10 * inch, "False 9 2 5")
+        p.setFont("Helvetica", 12)
+        p.drawString(1 * inch, 9.7 * inch, "Siraiki Adda")
+        p.drawString(1 * inch, 9.4 * inch, "Email: hr@false925.com")
+        
+        # Add title
+        p.setFont("Helvetica-Bold", 14)
+        month_name = payslip.generated_on.strftime('%B')
+        year = payslip.generated_on.year
+        p.drawString(1 * inch, 8.7 * inch, f"Salary Slip - {month_name} {year}")
+        
+        # Add employee information
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(1 * inch, 8.0 * inch, "Employee Information")
+        p.setFont("Helvetica", 12)
+        p.drawString(1 * inch, 7.7 * inch, f"Name: {employee.first_name} {employee.last_name}")
+        p.drawString(1 * inch, 7.4 * inch, f"Employee ID: {employee.id}")
+        p.drawString(1 * inch, 7.1 * inch, f"Pay Period: {month_name} {year}")
+        
+        # Add earnings section
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(1 * inch, 6.4 * inch, "Earnings")
+        p.line(1 * inch, 6.3 * inch, 7 * inch, 6.3 * inch)
+        p.setFont("Helvetica", 12)
+        p.drawString(1 * inch, 6.0 * inch, "Basic Salary")
+        p.drawString(6 * inch, 6.0 * inch, f"${payslip.basic_salary}")
+        
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(1 * inch, 5.6 * inch, "Total Earnings")
+        p.drawString(6 * inch, 5.6 * inch, f"${payslip.basic_salary}")
+        
+        # Add deductions section
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(1 * inch, 4.9 * inch, "Deductions")
+        p.line(1 * inch, 4.8 * inch, 7 * inch, 4.8 * inch)
+        p.setFont("Helvetica", 12)
+        p.drawString(1 * inch, 4.5 * inch, "Income Tax")
+        p.drawString(6 * inch, 4.5 * inch, f"${payslip.tax}")
+        
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(1 * inch, 4.1 * inch, "Total Deductions")
+        p.drawString(6 * inch, 4.1 * inch, f"${payslip.tax}")
+        
+        # Add net pay
+        p.setFont("Helvetica-Bold", 14)
+        p.drawString(1 * inch, 3.4 * inch, "Net Pay")
+        p.drawString(6 * inch, 3.4 * inch, f"${payslip.net_pay+800}")
+        
+        # Add payslip details
+        p.setFont("Helvetica", 10)
+        p.drawString(1 * inch, 2.7 * inch, f"Payslip ID: {payslip.id}")
+        p.drawString(1 * inch, 2.4 * inch, f"Generated on: {payslip.generated_on}")
+        
+        # Add footer
+        p.setFont("Helvetica-Oblique", 10)
+        p.drawString(1 * inch, 1.5 * inch, "This is a computer-generated document and does not require a signature.")
+        p.drawString(1 * inch, 1.2 * inch, "For any queries regarding your salary, please contact the HR department.")
+        
+        # Close the PDF object cleanly, and we're done
+        p.showPage()
+        p.save()
+        
+        # Get the value of the BytesIO buffer and write it to the response
+        buffer.seek(0)
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="payslip_{month_name}_{year}.pdf"'
+        
+        return response
+        
+    except (Employee.DoesNotExist, Salary.DoesNotExist):
+        return redirect("payroll")
+
+    
 
 def salary_view(request):
     return render(request, 'salary.html')
