@@ -20,17 +20,23 @@
                     <img src="{% static 'img/avatar.png' %}" alt="User Avatar" onerror="this.src='/static/img/default-avatar.png'">
                 </div> -->
                 <div class="user-details">
-                    <h3>{{ user.get_full_name }}</h3>
-                    <p>{{ user.employee.department }}</p>
+                    <h3>{{ employee.get_full_name }}</h3>
+                    <p>{{ employee.role }}</p>
                 </div>
             </div>
             <ul class="nav-links">
                 <li class="active"><a href="#"><span class="icon">📊</span> Dashboard</a></li>
                 <li><a href="{% url 'payroll' %}"><span class="icon">💰</span> Payroll</a></li>
+                {% if employee.role == "Manager" %}
                 <li><a href="{% url 'salary' %}"><span class="icon">💰</span> Salary Management</a></li>
+                {% endif %}
+                {% if employee.role != "Admin" %}
                 <li><a href="{% url 'leave' %}"><span class="icon">🗓️</span> Leave Management</a></li>
+                {% endif %}
+                {% if employee.role == "Admin" %} 
                 <li><a href="#"><span class="icon">👥</span> Employees</a></li>
                 <li><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
+                {% endif %}
                 <li><a href="{% url 'logout' %}"><span class="icon">🚪</span> Logout</a></li>
             </ul>
         </nav>
@@ -56,7 +62,7 @@
             <div class="dashboard-content">
                 <div class="page-header">
                     <h1>Dashboard</h1>
-                    <p>Welcome back, {{ user.first_name }}!</p>
+                    <p>Welcome back, {{ employee.first_name }}!</p>
                 </div>
 
                 <div class="stats-cards">

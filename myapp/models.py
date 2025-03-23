@@ -43,6 +43,9 @@ class Employee(models.Model):
         """Checks password validity"""
         return check_password(raw_password, self.password)
     
+    def get_full_name(self):
+        """Returns the full name of the employee"""
+        return f"{self.first_name} {self.last_name}"
     
     def check_role(self):
         return self.role
