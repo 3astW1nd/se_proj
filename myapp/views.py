@@ -2,6 +2,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.contrib import messages
+from .models import Employee, Leave
+from django.db.models import Sum, Count, Q, F, ExpressionWrapper, fields, IntegerField
+from django.http import JsonResponse
+from django.db.models.functions import ExtractDay
+
 from django.db.models import Q
 from django.http import JsonResponse
 from .models import Employee, Leave, Salary
@@ -304,7 +309,36 @@ def leave_view(request):
         if employee.check_role() == "Manager": 
             return manager_leaves_view(request)
         elif employee.check_role() == "HR":
-            return render(request, "hr_leave.html")
+            leave_summary = Leave.objects.annotate(
+                days=ExpressionWrapper(
+                   ExtractDay(F("end_date") - F("start_date")) + 1, output_field=IntegerField()
+                )
+            ).values("employee__department").annotate(
+                annual_leave=Sum("days", filter=Q(leave_type="Annual")),
+                sick_leave=Sum("days", filter=Q(leave_type="Sick")),
+                personal_leave=Sum("days", filter=Q(leave_type="Personal")),
+                other_leave=Sum("days", filter=Q(leave_type="Other")),
+                total_days=Sum("days"),
+                employee_count=Count("employee", distinct=True)
+            ).order_by("employee__department")
+            # Calculate average leave per employee
+            for entry in leave_summary:
+                entry["avg_per_employee"] = round(entry["total_days"] / entry["employee_count"], 2) if entry["employee_count"] > 0 else 0
+
+            # Get overall totals
+            totals = {
+                "annual_leave": sum(entry["annual_leave"] or 0 for entry in leave_summary),
+                "sick_leave": sum(entry["sick_leave"] or 0 for entry in leave_summary),
+                "personal_leave": sum(entry["personal_leave"] or 0 for entry in leave_summary),
+                "other_leave": sum(entry["other_leave"] or 0 for entry in leave_summary),
+                "total_days": sum(entry["total_days"] or 0 for entry in leave_summary),
+                "avg_per_employee": round(sum(entry["total_days"] for entry in leave_summary) / sum(entry["employee_count"] for entry in leave_summary), 2) if leave_summary else 0,
+            }
+
+            return render(request, "hr_leave.html", {
+                "leave_summary": leave_summary,
+                "totals": totals,
+            })
         else:
             leave_requests = Leave.objects.filter(employee=employee).order_by('-requested_on')
             return render(request, "leave.html", {
@@ -532,3 +566,92 @@ def leave_action_view(request, leave_id, action):
 
     except Leave.DoesNotExist:
         return JsonResponse({"error": "Leave request not found"}, status=404)
+
+
+from django.db.models import Sum, Count
+from django.shortcuts import render
+from .models import Leave, Employee
+
+def leave_summary_view(request):
+    """View to display leave summary by department."""
+    
+    # Get all leave requests, grouped by department
+    
+
+
+def get_leave_report(request):
+    department = request.GET.get("department", "all")
+    leave_type = request.GET.get("leave_type", "all")
+
+    # Calculate leave duration in days
+    leave_duration = ExpressionWrapper(
+        ExtractDay(F("end_date") - F("start_date")) + 1,
+        output_field=IntegerField()
+    )
+
+    # Apply filters
+    filters = Q()
+    if department != "all":
+        filters &= Q(employee__department=department)
+    if leave_type != "all":
+        filters &= Q(leave_type__iexact=leave_type)
+
+    # Fetch filtered leave data
+    report_data = (
+        Leave.objects.filter(filters)
+        .values("employee__department")
+        .annotate(
+            annual_leave=Sum(leave_duration, filter=Q(leave_type="Annual")),
+            sick_leave=Sum(leave_duration, filter=Q(leave_type="Sick")),
+            personal_leave=Sum(leave_duration, filter=Q(leave_type="Personal")),
+            other_leave=Sum(leave_duration, filter=Q(leave_type="Other")),
+            total_days=Sum(leave_duration),
+            employee_count=Count("employee", distinct=True),
+        )
+    )
+
+    result = []
+    total_annual_leave = 0
+    total_sick_leave = 0
+    total_personal_leave = 0
+    total_other_leave = 0
+    total_days = 0
+    total_employees = 0
+
+    for item in report_data:
+        annual_leave = item["annual_leave"] or 0
+        sick_leave = item["sick_leave"] or 0
+        personal_leave = item["personal_leave"] or 0
+        other_leave = item["other_leave"] or 0
+        total_leave_days = item["total_days"] or 0
+        employee_count = item["employee_count"] or 0
+
+        result.append({
+            "department": item["employee__department"],
+            "annual_leave": annual_leave,
+            "sick_leave": sick_leave,
+            "personal_leave": personal_leave,
+            "other_leave": other_leave,
+            "total_days": total_leave_days,
+            "avg_per_employee": round(total_leave_days / employee_count, 2) if employee_count else 0,
+        })
+
+        # Accumulate totals
+        total_annual_leave += annual_leave
+        total_sick_leave += sick_leave
+        total_personal_leave += personal_leave
+        total_other_leave += other_leave
+        total_days += total_leave_days
+        total_employees += employee_count
+
+    # Create a totals dictionary
+    totals = {
+        "annual_leave": total_annual_leave,
+        "sick_leave": total_sick_leave,
+        "personal_leave": total_personal_leave,
+        "other_leave": total_other_leave,
+        "total_days": total_days,
+        "avg_per_employee": round(total_days / total_employees, 2) if total_employees else 0,
+    }
+
+    return JsonResponse({"report": result, "totals": totals}, safe=False)

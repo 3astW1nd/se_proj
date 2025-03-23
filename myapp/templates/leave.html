@@ -95,6 +95,8 @@
                     </div>
                 </div>
 
+
+
                 <div class="leave-container">
                     <div class="leave-form">
                         <div class="grid-item">
@@ -201,6 +203,21 @@
                                                 <button class="btn-small cancel-btn"
                                                     data-id="{{ leave.id }}">Cancel</button>
                                                 {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% for leave in leave_requests %}
+                                        <tr>
+                                            <td>{{ leave.leave_type }}</td>
+                                            <td>{{ leave.start_date }}</td>
+                                            <td>{{ leave.end_date }}</td>
+                                            <td>{{ leave.days }}</td>
+                                            <td><span class="status {{ leave.status|lower }}">{{ leave.status }}</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn-small view-details"
+                                                    data-id="{{ leave.id }}">Details</button>
+
                                             </td>
                                         </tr>
                                         {% endfor %}
@@ -360,6 +377,8 @@
                     }
                 });
             });
+
+
 
             // Status filter functionality
             const statusFilter = document.getElementById('status-filter');

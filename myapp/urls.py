@@ -18,6 +18,8 @@ urlpatterns = [
     path("request-leave/success/", views.request_leave_success, name="request_leave_success"),
     path('manager/leaves/', views.manager_leaves_view, name='manager_leaves_view'),
     path('manager/leave/<int:leave_id>/<str:action>/', views.leave_action_view, name='leave_action'),
+    path("leave-summary/", views.leave_summary_view, name="leave_summary"),
+    path("get-leave-report/", views.get_leave_report, name="get_leave_report"),
     path('submit_salary', views.submit_salary, name='submit_salary')
    
 ]
