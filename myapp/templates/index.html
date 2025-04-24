@@ -35,6 +35,8 @@
                 {% endif %}
                 {% if employee.role == "Admin" %} 
                 <li><a href="{% url 'employee' %}"><span class="icon">👥</span> Employees</a></li>
+                {% endif %}
+                {% if employee.role == "Admin" or employee.role == "Employee"%}
                 <li><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
                 {% endif %}
                 <li><a href="{% url 'logout' %}"><span class="icon">🚪</span> Logout</a></li>

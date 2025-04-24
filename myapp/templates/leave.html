@@ -19,13 +19,14 @@
                 <!-- <div class="user-avatar">
                     <img src="{% static 'img/avatar.png' %}" alt="User Avatar" onerror="this.src='/static/img/default-avatar.png'">
                 </div> -->
+                
                 <div class="user-details">
-                    <h3>{{ user.get_full_name }}</h3>
-                    <p>{{ user.employee.department }}</p>
+                    <h3>{{ employee.get_full_name }}</h3>
+                    <p>{{ employee.role }}</p>
                 </div>
             </div>
             <ul class="nav-links">
-                <li ><a href="#"><span class="icon">📊</span> Dashboard</a></li>
+                <li ><a href="{% url 'dashboard' %}"><span class="icon">📊</span> Dashboard</a></li>
                 <li><a href="{% url 'payroll' %}"><span class="icon">💰</span> Payroll</a></li>
                 {% if employee.role == "Manager" %}
                 <li><a href="{% url 'salary' %}"><span class="icon">💰</span> Salary Management</a></li>
@@ -35,6 +36,8 @@
                 {% endif %}
                 {% if employee.role == "Admin" %} 
                 <li><a href="{% url 'employee' %}"><span class="icon">👥</span> Employees</a></li>
+                {% endif %}
+                {% if employee.role == "Admin" or employee.role == "Employee"%}
                 <li><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
                 {% endif %}
                 <li><a href="{% url 'logout' %}"><span class="icon">🚪</span> Logout</a></li>
@@ -210,21 +213,6 @@
                                                 <button class="btn-small cancel-btn"
                                                     data-id="{{ leave.id }}">Cancel</button>
                                                 {% endif %}
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                        {% for leave in leave_requests %}
-                                        <tr>
-                                            <td>{{ leave.leave_type }}</td>
-                                            <td>{{ leave.start_date }}</td>
-                                            <td>{{ leave.end_date }}</td>
-                                            <td>{{ leave.days }}</td>
-                                            <td><span class="status {{ leave.status|lower }}">{{ leave.status }}</span>
-                                            </td>
-                                            <td>
-                                                <button class="btn-small view-details"
-                                                    data-id="{{ leave.id }}">Details</button>
-
                                             </td>
                                         </tr>
                                         {% endfor %}

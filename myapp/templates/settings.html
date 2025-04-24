@@ -33,7 +33,9 @@
                 {% endif %}
                 {% if user.role == "Admin" %} 
                 <li><a href="{% url 'employee' %}"><span class="icon">👥</span> Employees</a></li>
-                <li class = "active"><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
+                {% endif %}
+                {% if user.role == "Admin" or user.role == "Employee"%}
+                <li><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
                 {% endif %}
                 <li><a href="{% url 'logout' %}"><span class="icon">🚪</span> Logout</a></li>
             </ul>
@@ -324,7 +326,7 @@
 
             editBtn.addEventListener('click', function () {
                 inputs.forEach(input => {
-                    if (input.id !== 'department' && input.id !== 'position') {
+                    if (input.id !== 'department' && input.id !== 'position' && input.id !== 'employee_id') {
                         input.removeAttribute('readonly');
                     }
                 });

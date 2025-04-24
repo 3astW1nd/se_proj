@@ -35,9 +35,11 @@
                 {% if user.role != "Admin" %}
                 <li><a href="{% url 'leave' %}"><span class="icon">🗓️</span> Leave Management</a></li>
                 {% endif %}
-                {% if user.role == "Admin" %} 
+                {% if employee.role == "Admin" %} 
                 <li><a href="{% url 'employee' %}"><span class="icon">👥</span> Employees</a></li>
-                <li class = "active"><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
+                {% endif %}
+                {% if employee.role == "Admin" or employee.role == "Employee"%}
+                <li><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
                 {% endif %}
                 <li><a href="{% url 'logout' %}"><span class="icon">🚪</span> Logout</a></li>
              </ul>
