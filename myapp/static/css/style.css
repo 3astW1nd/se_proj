@@ -255,7 +255,8 @@ ul {
 
 .top-bar-actions {
     display: flex;
-    align-items: center;
+    justify-content: center;
+
 }
 
 .notification,

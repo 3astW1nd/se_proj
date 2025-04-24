@@ -96,7 +96,38 @@ def dashboard_view(request):
         return redirect("login")
     
     employee = Employee.objects.get(id=user_id)
-    return render(request, "index.html", {"employee": employee})
+    
+    # Fetch recent leave request activities
+    leave_activities = []
+    
+    # Get employee's own leave requests
+    user_leaves = Leave.objects.filter(employee=employee).order_by('-requested_on')[:5]
+    for leave in user_leaves:
+        activity = {
+            'title': f"{leave.leave_type} Leave Request {leave.status}",
+            'date': leave.requested_on,
+            'description': f"Your {leave.leave_type} leave request from {leave.start_date} to {leave.end_date} has been {leave.status.lower()}."
+        }
+        leave_activities.append(activity)
+    
+    # If employee is a manager, fetch leave requests they need to approve
+    if employee.role == "Manager":
+        pending_leaves = Leave.objects.filter(status="Pending").exclude(employee=employee).order_by('-requested_on')[:5]
+        for leave in pending_leaves:
+            activity = {
+                'title': f"New Leave Request",
+                'date': leave.requested_on,
+                'description': f"{leave.employee.first_name} {leave.employee.last_name} requested {leave.leave_type} leave from {leave.start_date} to {leave.end_date}."
+            }
+            leave_activities.append(activity)
+    
+    # Sort activities by date (newest first)
+    leave_activities.sort(key=lambda x: x['date'], reverse=True)
+    
+    return render(request, "index.html", {
+        "employee": employee,
+        "announcements": leave_activities[:5]  # Limit to 5 most recent announcements
+    })
 
 def payroll_view(request):
     user_id = request.session.get("user_id")
