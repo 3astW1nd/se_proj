@@ -19,6 +19,7 @@ class Salary(models.Model):
     class Meta:
         db_table = "salary"  # Match the PostgreSQL table name
 
+
 class Employee(models.Model):
     ROLE_CHOICES = (
         ('Admin', 'Admin'),
@@ -34,6 +35,8 @@ class Employee(models.Model):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Employee')
     department = models.CharField(max_length=50, blank=True, null=True)
     date_joined = models.DateField(auto_now_add=True)
+    # Add profile image field
+    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
         
     def set_password(self, raw_password):
         """Hashes and sets the password"""
@@ -52,8 +55,7 @@ class Employee(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.role})"
-
-
+    
 class Leave(models.Model):
     STATUS_CHOICES = (
         ('Pending', 'Pending'),

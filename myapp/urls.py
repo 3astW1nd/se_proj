@@ -1,6 +1,10 @@
+# Add this to your urls.py file
 from django.urls import path
 from .views import home
 from myapp import views
+# In your project's urls.py
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', home, name='home'),
@@ -28,6 +32,9 @@ urlpatterns = [
     path('employee/update-role/<int:employee_id>/', views.update_employee_role, name='update_employee_role'),
     path('employee/details/<int:employee_id>/', views.get_employee_details, name='get_employee_details'),
     
+    # Add this line for the profile image update
+    path('update-profile-image/', views.update_profile_image, name='update_profile_image'),
 ]
 
-
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

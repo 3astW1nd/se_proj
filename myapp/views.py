@@ -18,6 +18,10 @@ import io
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
+import base64
+import os
+from django.core.files.base import ContentFile
+from django.shortcuts import redirect
 
 def home(request):
     return render(request, "index.html")  # Renders the login page
@@ -829,3 +833,56 @@ def employee_view(request):
     emp = Employee.objects.get(id = user_id)
     print(emp)
     return render(request, "employee.html", {"users": employees, "user": emp})
+
+
+
+def update_profile_image(request):
+    if request.method == 'POST':
+        try:
+            # Get the employee from the session
+            user_id = request.session.get('user_id')
+            if not user_id:
+                messages.error(request, "You must be logged in to update your profile image.")
+                return redirect('login')
+            
+            employee = Employee.objects.get(id=user_id)
+            
+            # Get the image data from the form
+            image_data = request.POST.get('image_data')
+            
+            if image_data:
+                try:
+                    # Remove the data:image/jpeg;base64, part
+                    format, imgstr = image_data.split(';base64,')
+                    ext = format.split('/')[-1]
+                    
+                    # Generate a filename
+                    filename = f"profile_{employee.id}.{ext}"
+                    
+                    # Convert base64 to file
+                    data = ContentFile(base64.b64decode(imgstr), name=filename)
+                    
+                    # Delete old image if it exists
+                    if employee.profile_image:
+                        if os.path.isfile(employee.profile_image.path):
+                            os.remove(employee.profile_image.path)
+                    
+                    # Save new image
+                    employee.profile_image = data
+                    employee.save()
+                    
+                    messages.success(request, "Profile image updated successfully!")
+                except Exception as e:
+                    messages.error(request, f"Error processing image: {str(e)}")
+            else:
+                messages.error(request, "No image data received.")
+                
+            return redirect('dashboard')
+            
+        except Employee.DoesNotExist:
+            messages.error(request, "Employee not found.")
+            return redirect('login')
+        except Exception as e:
+            messages.error(request, f"Error: {str(e)}")
+    
+    return redirect('dashboard')

@@ -474,7 +474,8 @@ ul {
     gap: 20px;
 }
 
-.payroll-list, .payslip-detail {
+.payroll-list,
+.payslip-detail {
     width: 100%;
 }
 
@@ -544,7 +545,8 @@ ul {
     color: var(--dark-color);
 }
 
-.company-info p, .employee-info p {
+.company-info p,
+.employee-info p {
     margin-bottom: 5px;
     font-size: 14px;
 }
@@ -640,7 +642,8 @@ ul {
     gap: 20px;
 }
 
-.leave-form, .leave-history {
+.leave-form,
+.leave-history {
     width: 100%;
 }
 
@@ -718,8 +721,15 @@ textarea:focus {
 }
 
 @keyframes modalFadeIn {
-    from {opacity: 0; transform: translateY(-20px);}
-    to {opacity: 1; transform: translateY(0);}
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .modal-header {
@@ -1050,11 +1060,11 @@ textarea:focus {
     transition: left 0.3s;
 }
 
-.toggle-input:checked + .toggle-label {
+.toggle-input:checked+.toggle-label {
     background-color: var(--secondary-color);
 }
 
-.toggle-input:checked + .toggle-label:after {
+.toggle-input:checked+.toggle-label:after {
     left: 28px;
 }
 
@@ -1063,15 +1073,15 @@ textarea:focus {
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .payroll-container {
         grid-template-columns: 1fr;
     }
-    
+
     .payslip-sections {
         grid-template-columns: 1fr;
     }
-    
+
     .leave-container {
         grid-template-columns: 1fr;
     }
@@ -1082,48 +1092,48 @@ textarea:focus {
         width: 70px;
         overflow: visible;
     }
-    
+
     .sidebar-header h2,
     .user-details,
     .nav-links li a span:not(.icon) {
         display: none;
     }
-    
+
     .user-avatar {
         margin-right: 0;
     }
-    
+
     .main-content {
         margin-left: 70px;
     }
-    
+
     .nav-links li a {
         justify-content: center;
         padding: 15px;
     }
-    
+
     .nav-links .icon {
         margin-right: 0;
         font-size: 20px;
     }
-    
+
     .stats-cards {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .payslip-header {
         flex-direction: column;
     }
-    
+
     .company-info {
         margin-bottom: 20px;
     }
-    
+
     .form-row {
         flex-direction: column;
         gap: 0;
     }
-    
+
     .detail-row {
         width: 100%;
     }
@@ -1133,16 +1143,16 @@ textarea:focus {
     .stats-cards {
         grid-template-columns: 1fr;
     }
-    
+
     .search-bar {
         width: 100%;
     }
-    
+
     .top-bar {
         flex-direction: column;
         align-items: flex-start;
     }
-    
+
     .top-bar-actions {
         margin-top: 15px;
         align-self: flex-end;
@@ -1151,10 +1161,11 @@ textarea:focus {
     .notification-option {
         flex-direction: column;
     }
-    
+
     .notification-toggle {
         margin-bottom: 10px;
     }
+
     :root {
         --primary-color: #3498db;
         --secondary-color: #2ecc71;
@@ -1312,25 +1323,84 @@ textarea:focus {
             display: block;
             overflow-x: auto;
         }
-        
+
         .employee-profile {
             flex-direction: column;
             text-align: center;
         }
-        
+
         .employee-avatar {
             margin-right: 0;
             margin-bottom: 15px;
         }
-        
+
         .detail-row {
             flex-direction: column;
         }
-        
+
         .detail-label {
             width: 100%;
             margin-bottom: 5px;
         }
     }
 
+}
+
+/* Enhanced User Avatar Styles */
+.user-avatar {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 15px;
+    background-color: #f0f0f0;
+    /* Fallback background */
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    /* Ensure image is block-level */
+}
+
+.avatar-upload {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    z-index: 10;
+    /* Ensure it's above other elements */
+}
+
+.avatar-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.avatar-upload-btn:hover {
+    background-color: #2980b9;
+    transform: scale(1.1);
+}
+
+/* Make sure the user info section is properly styled */
+.user-info {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    /* Ensure proper positioning context */
 }

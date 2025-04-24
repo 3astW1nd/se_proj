@@ -16,9 +16,15 @@
                 <h2>Payroll System</h2>
             </div>
             <div class="user-info">
-                <!-- <div class="user-avatar">
-                    <img src="{% static 'img/avatar.png' %}" alt="User Avatar" onerror="this.src='/static/img/default-avatar.png'">
-                </div> -->
+                <div class="user-avatar">
+                    <img src="{% if employee.profile_image %}{{ employee.profile_image.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
+                        alt="User Avatar" onerror="this.onerror=null; this.src='{% static 'img/default-avatar.png' %}'">
+                    <div class="avatar-upload">
+                        <label for="profile-upload" class="avatar-upload-btn" title="Change profile picture">📷</label>
+                        <input type="file" id="profile-upload" accept="image/*" style="display: none;"
+                            onclick="event.stopPropagation();" onchange="uploadProfileImage(this)">
+                    </div>
+                </div>
                 <div class="user-details">
                     <h3>{{ employee.get_full_name }}</h3>
                     <p>{{ employee.role }}</p>
@@ -33,7 +39,7 @@
                 {% if employee.role != "Admin" %}
                 <li><a href="{% url 'leave' %}"><span class="icon">🗓️</span> Leave Management</a></li>
                 {% endif %}
-                {% if employee.role == "Admin" %} 
+                {% if employee.role == "Admin" %}
                 <li><a href="{% url 'employee' %}"><span class="icon">👥</span> Employees</a></li>
                 <li><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
                 {% endif %}
@@ -193,12 +199,85 @@
                             </div>
                         </div>
                     </div>
-
-
                 </div>
             </div>
         </main>
     </div>
+
+    <!-- Profile Image Upload Modal -->
+    <div id="profile-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Update Profile Picture</h2>
+                <span class="close" onclick="closeProfileModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="profile-avatar-section">
+                    <div class="profile-avatar">
+                        <img id="preview-image"
+                            src="{% if employee.profile_image %}{{ employee.profile_image.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
+                            alt="Profile Preview">
+                    </div>
+                    <p class="avatar-help">Preview of your new profile picture</p>
+                </div>
+                <form id="profile-image-form" method="post" action="{% url 'update_profile_image' %}"
+                    enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="image_data" id="image-data">
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to handle profile image upload
+        function uploadProfileImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    // Preview the image
+                    document.getElementById('preview-image').src = e.target.result;
+
+                    // Store the image data
+                    document.getElementById('image-data').value = e.target.result;
+
+                    // Show the modal
+                    var modal = document.getElementById('profile-modal');
+                    modal.style.display = 'block';
+                }
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Function to close the profile modal
+        function closeProfileModal() {
+            document.getElementById('profile-modal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function (event) {
+            var modal = document.getElementById('profile-modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Add event listener to ensure the upload button works
+        document.addEventListener('DOMContentLoaded', function () {
+            var uploadBtn = document.querySelector('.avatar-upload-btn');
+            if (uploadBtn) {
+                uploadBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
