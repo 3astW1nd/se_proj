@@ -144,40 +144,7 @@
                         </div>
                     </div>
 
-                    <div class="grid-item leave-requests">
-                        <div class="item-header">
-                            <h2>Leave Requests</h2>
-                            <a href="#" class="view-all">View All</a>
-                        </div>
-                        <div class="item-content">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Type</th>
-                                        <th>From</th>
-                                        <th>To</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% if leave_requests %}
-                                    {% for leave in leave_requests %}
-                                    <tr>
-                                        <td>{{ leave.type }}</td>
-                                        <td>{{ leave.start_date }}</td>
-                                        <td>{{ leave.end_date }}</td>
-                                        <td><span class="status {{ leave.status|lower }}">{{ leave.status }}</span></td>
-                                    </tr>
-                                    {% endfor %}
-                                    {% else %}
-                                    <tr>
-                                        <td colspan="4">No leave requests</td>
-                                    </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+
 
                     <div class="grid-item announcements">
                         <div class="item-header">
@@ -189,13 +156,13 @@
                                 {% for announcement in announcements %}
                                 <div class="announcement">
                                     <h3>{{ announcement.title }}</h3>
-                                    <p class="date">{{ announcement.date }}</p>
+                                    <p class="date">{{ announcement.date|date:"F d, Y" }}</p>
                                     <p class="description">{{ announcement.description }}</p>
                                 </div>
                                 {% endfor %}
                                 {% else %}
                                 <div class="announcement">
-                                    <p>No announcements at this time</p>
+                                    <p>No leave request updates at this time</p>
                                 </div>
                                 {% endif %}
                             </div>
