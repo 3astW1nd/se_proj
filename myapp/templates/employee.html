@@ -35,10 +35,10 @@
                 {% if user.role != "Admin" %}
                 <li><a href="{% url 'leave' %}"><span class="icon">🗓️</span> Leave Management</a></li>
                 {% endif %}
-                {% if employee.role == "Admin" %} 
+                {% if user.role == "Admin" %} 
                 <li><a href="{% url 'employee' %}"><span class="icon">👥</span> Employees</a></li>
                 {% endif %}
-                {% if employee.role == "Admin" or employee.role == "Employee"%}
+                {% if user.role == "Admin" or user.role == "Employee"%}
                 <li><a href="{% url 'settings' %}"><span class="icon">⚙️</span> Settings</a></li>
                 {% endif %}
                 <li><a href="{% url 'logout' %}"><span class="icon">🚪</span> Logout</a></li>
@@ -110,14 +110,14 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% if employees %}
-                                        {% for employee in employees %}
+                                    {% if users %}
+                                        {% for employee in users %}
                                         <tr data-employee-id="{{ employee.id }}">
                                             <td>{{ employee.id }}</td>
                                             <td>{{ employee.get_full_name }}</td>
                                             <td>{{ employee.email }}</td>
                                             <td>{{ employee.department }}</td>
-                                            <td>{{ employee.department }}</td>
+                                            <td>{{ employee.role }}</td>
                                             <td class="action-buttons">
                                                 <button class="btn-small view-details-btn" data-id="{{ employee.id }}">Details</button>
                                                 <button class="btn-small edit-btn" data-id="{{ employee.id }}">Edit</button>
@@ -288,7 +288,7 @@
                     const email = row.cells[2].textContent;
                     const department = row.cells[3].textContent;
                     const position = row.cells[4].textContent;
-                    const role = row.querySelector('.role-select').value;
+                    const role = row.cells[5].textContent;
                     
                     // Populate the modal
                     document.getElementById('modal-name').textContent = name;
@@ -321,14 +321,131 @@
             // Edit button functionality
             const editButtons = document.querySelectorAll('.edit-btn');
             
-            editButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const employeeId = this.getAttribute('data-id');
-                    // Redirect to an edit page or open an edit modal
-                    window.location.href = `/employee/edit/${employeeId}/`;
-                });
+
+            
+        });
+
+
+        
+
+        document.addEventListener('DOMContentLoaded', function() {
+        // Get the modal elements
+        const viewModal = document.getElementById('employee-details-modal');
+        const editModal = document.createElement('div');
+        editModal.id = 'employee-edit-modal';
+        editModal.className = 'modal';
+        
+        // Create the edit modal HTML structure
+        editModal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Edit Employee</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="{% url 'update_employee' %}" id="edit-employee-form" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" id="edit-employee-id" name="employee_id">
+                        
+                        <div class="form-group">
+                            <label for="edit-name">Full Name:</label>
+                            <input type="text" id="edit-name" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-email">Email:</label>
+                            <input type="email" id="edit-email" name="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-department">Department:</label>
+                            <input type="text" id="edit-department" name="department" required readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-role">Role:</label>
+                            <input type="text" id="edit-role" name="role" required readonly>
+                        </div>
+                        
+                        
+                        <div class="form-actions">
+                            <button type="button" id="cancel-edit" class="btn-secondary">Cancel</button>
+                            <button type="submit" id = "save-prof-btn" class="btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        
+        // Add the edit modal to the document
+        document.body.appendChild(editModal);
+        
+        // Get all edit buttons
+        const editButtons = document.querySelectorAll('.edit-btn');
+        
+        // Add click event to edit buttons
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const employeeId = this.getAttribute('data-id');
+                const row = this.closest('tr');
+                
+                // Get employee data from the row
+                const id = row.cells[0].textContent;
+                const name = row.cells[1].textContent;
+                const email = row.cells[2].textContent;
+                const department = row.cells[3].textContent;
+                const role = row.cells[4].textContent;
+                
+                // Populate the edit form
+                document.getElementById('edit-employee-id').value = id;
+                document.getElementById('edit-name').value = name;
+                document.getElementById('edit-email').value = email;
+                document.getElementById('edit-department').value = department;
+                document.getElementById('edit-role').value = role;
+                
+               
+                
+                // Show the edit modal
+                editModal.style.display = 'block';
             });
         });
+        
+        // Close button functionality for edit modal
+        const editCloseButton = editModal.querySelector('.close');
+        editCloseButton.addEventListener('click', function() {
+            editModal.style.display = 'none';
+        });
+        
+        // Cancel button functionality
+        const cancelButton = document.getElementById('cancel-edit');
+        cancelButton.addEventListener('click', function() {
+            editModal.style.display = 'none';
+        });
+        
+        // Handle form submission
+        const editForm = document.getElementById('edit-employee-form');
+        saveBtn.addEventListener("click", function () {
+                document.querySelector(".settings-form").submit(); // Submits the form
+        });
+        
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === editModal) {
+                editModal.style.display = 'none';
+            }
+        });
+
+        const saveBtn = document.getElementById('save-prof-btn');
+        saveBtn.addEventListener("click", function () {
+                document.querySelector("edit-employee-form").submit(); // Submits the form
+            });
+            
+    });
+
+
+
+
     </script>
 </body>
 </html>

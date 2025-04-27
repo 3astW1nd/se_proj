@@ -32,6 +32,8 @@ urlpatterns = [
     path('employee/update-role/<int:employee_id>/', views.update_employee_role, name='update_employee_role'),
     path('employee/details/<int:employee_id>/', views.get_employee_details, name='get_employee_details'),
     
+    path('employee/update-employee/', views.update_employee, name='update_employee'),
+    
     # Add this line for the profile image update
     path('update-profile-image/', views.update_profile_image, name='update_profile_image'),
 ]
