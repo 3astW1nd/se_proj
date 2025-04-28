@@ -1405,3 +1405,9 @@ textarea:focus {
     position: relative;
     /* Ensure proper positioning context */
 }
+
+.lower-dashboard {
+
+    display: flex;
+    flex-direction: row;
+}

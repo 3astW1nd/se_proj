@@ -1,4 +1,3 @@
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.contrib import messages
@@ -123,10 +122,50 @@ def dashboard_view(request):
     
     # Sort activities by date (newest first)
     leave_activities.sort(key=lambda x: x['date'], reverse=True)
+
+    # Calculate leave balance (30 - approved leaves)
+    from django.db.models import Sum, ExpressionWrapper, fields, F, IntegerField
+    from django.db.models.functions import ExtractDay
+    
+    # Get all approved leaves for the employee
+    approved_leaves = Leave.objects.filter(
+        employee=employee,
+        status="Approved"
+    )
+    
+    # Calculate total approved leave days
+    total_approved_days = 0
+    for leave in approved_leaves:
+        # Calculate days between start_date and end_date (inclusive)
+        days = (leave.end_date - leave.start_date).days + 1
+        total_approved_days += days
+    
+    # Calculate leave balance
+    leave_balance = 30 - total_approved_days
+    if leave_balance < 0:
+        leave_balance = 0  # Ensure balance doesn't go negative
+    
+    # Fetch recent salary records for the current employee
+    payslips = Salary.objects.filter(employee_id=user_id).order_by('-generated_on')[:5]
+    
+    # Get the most recent salary for the employee
+    most_recent_salary = None
+    if payslips.exists():
+        most_recent_salary = payslips.first().basic_salary
+    
+    # Add month and year attributes to each payslip for display
+    for payslip in payslips:
+        payslip.month = payslip.generated_on.strftime('%B')  # Full month name
+        payslip.year = payslip.generated_on.year
+        payslip.status = "Processed"  # Default status
+        payslip.net_salary = payslip.net_pay + 800  # Match the template's expected attribute
     
     return render(request, "index.html", {
         "employee": employee,
-        "announcements": leave_activities[:5]  # Limit to 5 most recent announcements
+        "announcements": leave_activities[:5],  # Limit to 5 most recent announcements
+        "payslips": payslips,
+        "most_recent_salary": most_recent_salary,
+        "leave_balance": leave_balance
     })
 
 def payroll_view(request):
@@ -902,7 +941,7 @@ def update_profile_image(request):
                     employee.profile_image = data
                     employee.save()
                     
-                    messages.success(request, "Profile image updated successfully!")
+                    
                 except Exception as e:
                     messages.error(request, f"Error processing image: {str(e)}")
             else:
