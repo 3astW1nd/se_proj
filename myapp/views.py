@@ -956,3 +956,32 @@ def update_profile_image(request):
             messages.error(request, f"Error: {str(e)}")
     
     return redirect('dashboard')
+
+
+
+def update_employee(request):
+    if request.method == 'POST':
+        try:
+            employee = Employee.objects.get(id=request.POST.get('employee_id'))  # Fetch user by email
+        except Employee.DoesNotExist:
+            return redirect('settings')
+        
+        # Ensure the user is authenticated
+        full_name = request.POST.get('name', '')
+        if full_name:
+            name_parts = full_name.strip().split(' ', 1)  # split into first and last
+            employee.first_name = name_parts[0]
+            if len(name_parts) > 1:
+                employee.last_name = name_parts[1]
+            else:
+                employee.last_name = ''
+                
+        employee.email = request.POST.get('email', employee.email)
+        employee.save()
+
+        logged_employee_id = request.session.get("user_id")
+        logged_employee = Employee.objects.get(id=logged_employee_id)
+
+        employees = Employee.objects.all()
+        return redirect("employee")
+    
