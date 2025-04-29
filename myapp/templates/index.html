@@ -77,48 +77,44 @@
                     <div class="card">
                         <div class="card-icon">💵</div>
                         <div class="card-info">
-                            <h3>Salary</h3>
-                            <p class="amount">${{ user.employee.salary|default:"0.00" }}</p>
+                            <h3> Base Salary</h3>
+                            <p class="amount">
+                                {% if most_recent_salary %}
+                                ${{ most_recent_salary }}
+                                {% else %}
+                                $0.00
+                                {% endif %}
+                            </p>
                         </div>
+
                     </div>
 
                     <div class="card">
                         <div class="card-icon">📅</div>
                         <div class="card-info">
                             <h3>Leave Balance</h3>
-                            <p class="amount">{{ user.employee.leave_balance|default:"0" }} days</p>
+                            <p class="amount">{{ leave_balance }} days</p>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <div class="card-icon">⏱️</div>
-                        <div class="card-info">
-                            <h3>Hours Worked</h3>
-                            <p class="amount">{{ user.employee.hours_worked|default:"0" }} hrs</p>
-                        </div>
-                    </div>
 
-                    <div class="card">
-                        <div class="card-icon">📊</div>
-                        <div class="card-info">
-                            <h3>Performance</h3>
-                            <p class="amount">{{ user.employee.performance_rating|default:"N/A" }}</p>
-                        </div>
-                    </div>
+
                 </div>
 
                 <div class="dashboard-grid">
-                    <div class="grid-item recent-payslips">
+
+                    <div class="grid-item salary-slips">
                         <div class="item-header">
-                            <h2>Recent Payslips</h2>
-                            <a href="#" class="view-all">View All</a>
+                            <h2>Salary Slips</h2>
+                            <a href="{% url 'payroll' %}" class="view-all">View All</a>
                         </div>
                         <div class="item-content">
                             <table class="data-table">
                                 <thead>
                                     <tr>
                                         <th>Month</th>
-                                        <th>Net Salary</th>
+                                        <th>Year</th>
+                                        <th>Net Pay</th>
                                         <th>Status</th>
                                         <th>Action</th>
                                     </tr>
@@ -128,22 +124,23 @@
                                     {% for payslip in payslips %}
                                     <tr>
                                         <td>{{ payslip.month }}</td>
+                                        <td>{{ payslip.year }}</td>
                                         <td>${{ payslip.net_salary }}</td>
                                         <td><span class="status {{ payslip.status|lower }}">{{ payslip.status }}</span>
                                         </td>
-                                        <td><a href="#" class="btn-small">View</a></td>
+                                        <td><a href="{% url 'payroll' %}?id={{ payslip.id }}" class="btn-small">View</a>
+                                        </td>
                                     </tr>
                                     {% endfor %}
                                     {% else %}
                                     <tr>
-                                        <td colspan="4">No payslips available</td>
+                                        <td colspan="5">No salary slips available</td>
                                     </tr>
                                     {% endif %}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-
 
 
                     <div class="grid-item announcements">
