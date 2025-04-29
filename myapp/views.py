@@ -22,6 +22,7 @@ import base64
 import os
 from django.core.files.base import ContentFile
 from django.shortcuts import redirect
+import re
 
 def home(request):
     return render(request, "index.html")  # Renders the login page
@@ -925,20 +926,31 @@ def update_employee(request):
         try:
             employee = Employee.objects.get(id=request.POST.get('employee_id'))  # Fetch user by email
         except Employee.DoesNotExist:
-            return redirect('settings')
+            return redirect('employee')
+        
         
         # Ensure the user is authenticated
-        full_name = request.POST.get('name', '')
-        if full_name:
-            name_parts = full_name.strip().split(' ', 1)  # split into first and last
-            employee.first_name = name_parts[0]
-            if len(name_parts) > 1:
-                employee.last_name = name_parts[1]
-            else:
-                employee.last_name = ''
-                
-        employee.email = request.POST.get('email', employee.email)
-        employee.save()
+        try:
+            full_name = request.POST.get('name', '')
+            if full_name:
+                name_parts = full_name.strip().split(' ', 1)
+                first_name = name_parts[0]
+                last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+                # Regex: Only allow letters and spaces (you can modify to include hyphens or apostrophes if needed)
+                name_pattern = r'^[A-Za-z]+$'
+
+                if not re.fullmatch(name_pattern, first_name):
+                    messages.error(request, "First name must contain only letters.")
+                    return redirect('employee')
+
+                if last_name and not re.fullmatch(name_pattern, last_name):
+                    messages.error(request, "Last name must contain only letters.")
+                    return redirect('employee')                    
+            employee.email = request.POST.get('email', employee.email)
+            employee.save()
+        except Exception as e:
+            messages.error(request, f"Error updating employee: {str(e)}")
 
         logged_employee_id = request.session.get("user_id")
         logged_employee = Employee.objects.get(id=logged_employee_id)
