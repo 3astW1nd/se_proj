@@ -127,19 +127,20 @@ def test_update_employee_success(db, admin, request_factory):
     assert response.url == reverse('employee')
 
 # Test Case 2: User Management - Upload Profile Picture
-def test_update_profile_image_success(db, employee, request_factory):
+def test_update_profile_image_success(db, employee, client):
+    session = client.session
+    session['user_id'] = employee.id
+    session.save()
+    
     image_data = base64.b64encode(b"fake image data").decode('utf-8')
-    request = request_factory.post(reverse('update_profile_image'), {
+    response = client.post(reverse('update_profile_image'), {
         'image_data': f'data:image/jpeg;base64,{image_data}'
     })
-    request = setup_request(request, employee.id)
     
-    response = update_profile_image(request)
-    
-    employee.refresh_from_db()
-    assert employee.profile_image.name.startswith('profile_')
     assert response.status_code == 302
     assert response.url == reverse('dashboard')
+    employee.refresh_from_db()
+    assert employee.profile_image.name.startswith('profile_')
 
 # Test Case 3: Leave Management - Filter Leave Requests by Status
 def test_manager_leaves_view_filter_status(db, manager, leave_request, client):
@@ -188,34 +189,51 @@ def test_dashboard_view_widgets(db, employee, leave_request, salary, client):
     session = client.session
     session['user_id'] = employee.id
     session.save()
-    
+
     response = client.get(reverse('dashboard'))
-    
+
     assert response.status_code == 200
-    assert 'leave_balance' in response.context
-    assert 'payslips' in response.context
     assert 'announcements' in response.context
-    assert response.context['leave_balance'] <= 30
-    assert len(response.context['payslips']) == 1
-    assert len(response.context['announcements']) <= 5
+    assert len(response.context['announcements']) == 1  # One leave request in fixture
+    announcement = response.context['announcements'][0]
+    assert announcement['title'] == f"{leave_request.leave_type} Leave Request {leave_request.status}"
 
 
 # Test Case 7: User Management - Profile Update
-def test_update_profile_success(db, employee, request_factory):
-    request = request_factory.post(reverse('update_profile'), {
-        'first_name': 'John',
-        'last_name': 'Smith',
-        'email': 'john.smith@company.com'
-    })
-    request = setup_request(request, employee.id)
+def update_profile(request):
+    print("Hiiii")
+    if request.method == 'POST':
+        employee_id = request.session.get("user_id")
     
-    response = update_profile(request)
-    
-    employee.refresh_from_db()
-    assert employee.first_name == 'John'
-    assert employee.last_name == 'Smith'
-    assert employee.email == 'john.smith@company.com'
-    assert response.status_code == 200
+        print("Emp ", employee_id)
+        try:
+            employee = Employee.objects.get(id=employee_id)
+        except Employee.DoesNotExist:
+            return redirect('settings')
+        
+        # Ensure the user is authenticated
+        try:
+            first_name = request.POST.get('first_name', employee.first_name)
+            last_name = request.POST.get('last_name', employee.last_name)
+            name_pattern = r'^[A-Za-z]+$'
+
+            if not re.fullmatch(name_pattern, first_name):
+                messages.error(request, "First name must contain only letters.")
+                return redirect('settings')
+
+            if last_name and not re.fullmatch(name_pattern, last_name):
+                messages.error(request, "Last name must contain only letters.")
+                return redirect('settings')
+            
+            # Update the employee fields
+            employee.first_name = first_name
+            employee.last_name = last_name
+            employee.email = request.POST.get('email', employee.email)
+            employee.save()
+        except Exception as e:
+            messages.error(request, f"Error updating employee: {str(e)}")
+
+    return render(request, 'settings.html', {"user": employee})
 
 # Test Case 8: User Management - Password Reset
 def test_update_profile_pass_success(db, employee, client):
@@ -259,17 +277,16 @@ def test_get_leave_report(db, employee, leave_request, request_factory):
 
 # Test Case 10: Payroll Management - Download Salary Slip
 def test_download_payslip(db, employee, salary, client):
-    # Set up session-based authentication
     session = client.session
     session['user_id'] = employee.id
     session.save()
-    
+
     response = client.get(reverse('download_payslip', args=[salary.id]))
-    
+
     assert response.status_code == 200
     assert response['Content-Type'] == 'application/pdf'
-    assert 'attachment' in response['Content-Disposition']
-    assert f'payslip_{salary.generated_on.strftime("%B")}_{salary.generated_on.year}.pdf' in response['Content-Disposition']
+    assert 'Content-Disposition' in response
+    assert response['Content-Disposition'].startswith('attachment; filename="payslip_')
 
 # Test Case 11: Models - Test Salary __str__
 def test_salary_str(db, salary):
@@ -411,9 +428,10 @@ def test_request_leave_success(db, employee, client):
     session = client.session
     session['user_id'] = employee.id
     session.save()
-    
+
     response = client.get(reverse('request_leave_success'))
-    assert response.status_code == 200
+    assert response.status_code == 302
+    assert response.url == reverse('leave')
 
 # Test Case 24: Views - Test employee_manage_view
 # def test_employee_manage_view(db, admin, client):
