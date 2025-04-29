@@ -1,33 +1,33 @@
+import os
+import io
+import base64
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.contrib import messages
-from .models import Employee, Leave
 from django.db.models import Sum, Count, Q, F, ExpressionWrapper, fields, IntegerField
 from django.http import JsonResponse
 from django.db.models.functions import ExtractDay
 from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import Q
-from django.http import JsonResponse
 from .models import Employee, Leave, Salary
 from decimal import Decimal
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-from django.shortcuts import redirect
-import io
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
-import base64
-import os
 from django.core.files.base import ContentFile
-from django.shortcuts import redirect
+from django.contrib.auth import login, logout
+from django.db import connection
+from datetime import datetime
+from django.contrib.auth.decorators import login_required
+
+
+
 
 def home(request):
-    return render(request, "index.html")  # Renders the login page
+    return render(request, "login.html")  # Renders the login page
 
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout
-from .models import Employee
 
 # ---------------- Signup View ----------------
 def signup_view(request):
@@ -168,6 +168,7 @@ def dashboard_view(request):
         "leave_balance": leave_balance
     })
 
+# ---------------- Payroll View ----------------
 def payroll_view(request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -313,18 +314,10 @@ def download_payslip(request, payslip_id):
     except (Employee.DoesNotExist, Salary.DoesNotExist):
         return redirect("payroll")
 
-    
-
+# ---------------- Salary View ---------------- 
 def salary_view(request):
     return render(request, 'salary.html')
 
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from decimal import Decimal
-from django.db import connection
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
 
 def salary_view(request):
     return render(request, 'salary.html')
@@ -378,6 +371,7 @@ def submit_salary(request):
         messages.error(request, f"Error: {str(e)}")
         return redirect("salary")
 
+# ---------------- Leave View ----------------
 def leave_view(request):
     user_id = request.session.get("user_id")
     try:
@@ -425,7 +419,7 @@ def leave_view(request):
     except Employee.DoesNotExist:
         return render(request, "login.html", {"error_message": "User does not exist"})
     
-
+# ---------------- Settings View ----------------
 def settings_view(request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -434,11 +428,7 @@ def settings_view(request):
     employee = Employee.objects.get(id=user_id)
     return render(request, "settings.html", {"user": employee})
 
-# ---------------- Leaves View ----------------
-from django.shortcuts import redirect
-from django.utils import timezone
-from datetime import datetime
-
+# ---------------- Request Leave View ----------------
 def request_leave_view(request):
     """View for employees to request leave"""
     user_id = request.session.get("user_id")
@@ -515,7 +505,7 @@ def request_leave_success(request):
         "leave_requests": leave_requests
     })
 
-
+# ---------------- Manager Leave View ----------------
 def manager_leaves_view(request):
     """View for administrators to see all pending leave requests"""
     user_id = request.session.get("user_id")
@@ -601,7 +591,6 @@ def manager_leaves_view(request):
         return redirect("login")
     
 
-
 def leave_action_view(request, leave_id, action):
     """View for approving or rejecting leave requests"""
     if request.method != "POST":
@@ -649,15 +638,10 @@ def leave_action_view(request, leave_id, action):
         return JsonResponse({"error": "Leave request not found"}, status=404)
 
 
-from django.db.models import Sum, Count
-from django.shortcuts import render
-from .models import Leave, Employee
-
 def leave_summary_view(request):
     """View to display leave summary by department."""
     
     # Get all leave requests, grouped by department
-    
 
 
 def get_leave_report(request):
@@ -737,7 +721,6 @@ def get_leave_report(request):
 
     return JsonResponse({"report": result, "totals": totals}, safe=False)
 
-from django.contrib.auth.decorators import login_required
 
 def update_profile(request):
 
@@ -758,6 +741,7 @@ def update_profile(request):
         employee.save()
         
     return render(request, 'settings.html', {"user": employee})
+
 
 def update_profile_pass(request):
     if request.method == 'POST':

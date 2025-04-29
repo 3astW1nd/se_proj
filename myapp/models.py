@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-# Create your models here.
-from django.db import models
 from django.contrib.auth.hashers import make_password, check_password
 
 
@@ -18,7 +16,6 @@ class Salary(models.Model):
     
     class Meta:
         db_table = "salary"  # Match the PostgreSQL table name
-
 
 class Employee(models.Model):
     ROLE_CHOICES = (
@@ -79,7 +76,7 @@ class Leave(models.Model):
         """Approve the leave request"""
         self.status = 'Approved'
         self.manager = manager
-        self.approved_on = models.DateField(auto_now=True)
+        self.approved_on = now().date()
         self.save()
 
     def reject(self, manager):
@@ -90,3 +87,6 @@ class Leave(models.Model):
 
     def __str__(self):
         return f"{self.employee.first_name} {self.employee.last_name} - {self.leave_type} ({self.status})"
+    
+
+
