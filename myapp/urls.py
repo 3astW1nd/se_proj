@@ -34,6 +34,9 @@ urlpatterns = [
     
     path('employee/update-employee/', views.update_employee, name='update_employee'),
     
+    path('cancel-leave/<int:leave_id>/', views.cancel_leave_view, name='cancel_leave'),
+
+
     # Add this line for the profile image update
     path('update-profile-image/', views.update_profile_image, name='update_profile_image'),
 ]

@@ -244,6 +244,7 @@
             }
 
             // Password strength meter
+            const current_password = document.getElementById('current_password');
             const newPasswordInput = document.getElementById('new_password');
             const strengthBar = document.getElementById('strength-bar');
             const strengthText = document.getElementById('strength-text');
@@ -254,12 +255,17 @@
                     let strength = 0;
                     let status = '';
 
+                    // Reset custom validity
+                    this.setCustomValidity('');
+
+                    // Check length first
                     if (password.length === 0) {
                         strength = 0;
                         status = 'Not entered';
                     } else if (password.length < 6) {
                         strength = 25;
                         status = 'Weak';
+                        this.setCustomValidity('Password must be at least 6 characters long.');
                     } else if (password.length < 8) {
                         strength = 50;
                         status = 'Medium';
@@ -276,6 +282,40 @@
                         status = 'Good';
                     }
 
+                    // Check if password meets strength requirements
+                    const isValidLength = password.length >= 8;
+                    const hasLowercase = /[a-z]/.test(password);
+                    const hasUppercase = /[A-Z]/.test(password);
+                    const hasNumber = /[0-9]/.test(password);
+                    const hasSpecialChar = /[^a-zA-Z0-9]/.test(password);
+
+                    if (newPasswordInput.value === current_password.value) {
+                        this.setCustomValidity('New password cannot be the same as the current password.');
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                    
+                    if (!isValidLength) {
+                        this.setCustomValidity('Password must be at least 8 characters long.');
+                    }
+                    
+                    if (!hasLowercase) {
+                        this.setCustomValidity('Password must include at least one lowercase letter.');
+                    }
+
+                    if (!hasUppercase) {
+                        this.setCustomValidity('Password must include at least one uppercase letter.');
+                    }
+
+                    if (!hasNumber) {
+                        this.setCustomValidity('Password must include at least one number.');
+                    }
+
+                    if (!hasSpecialChar) {
+                        this.setCustomValidity('Password must include at least one special character.');
+                    }
+
+                    
                     // Update strength bar
                     strengthBar.style.width = strength + '%';
 
