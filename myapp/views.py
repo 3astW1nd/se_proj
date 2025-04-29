@@ -1,6 +1,3 @@
-import os
-import io
-import base64
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.contrib import messages
@@ -122,50 +119,10 @@ def dashboard_view(request):
     
     # Sort activities by date (newest first)
     leave_activities.sort(key=lambda x: x['date'], reverse=True)
-
-    # Calculate leave balance (30 - approved leaves)
-    from django.db.models import Sum, ExpressionWrapper, fields, F, IntegerField
-    from django.db.models.functions import ExtractDay
-    
-    # Get all approved leaves for the employee
-    approved_leaves = Leave.objects.filter(
-        employee=employee,
-        status="Approved"
-    )
-    
-    # Calculate total approved leave days
-    total_approved_days = 0
-    for leave in approved_leaves:
-        # Calculate days between start_date and end_date (inclusive)
-        days = (leave.end_date - leave.start_date).days + 1
-        total_approved_days += days
-    
-    # Calculate leave balance
-    leave_balance = 30 - total_approved_days
-    if leave_balance < 0:
-        leave_balance = 0  # Ensure balance doesn't go negative
-    
-    # Fetch recent salary records for the current employee
-    payslips = Salary.objects.filter(employee_id=user_id).order_by('-generated_on')[:5]
-    
-    # Get the most recent salary for the employee
-    most_recent_salary = None
-    if payslips.exists():
-        most_recent_salary = payslips.first().basic_salary
-    
-    # Add month and year attributes to each payslip for display
-    for payslip in payslips:
-        payslip.month = payslip.generated_on.strftime('%B')  # Full month name
-        payslip.year = payslip.generated_on.year
-        payslip.status = "Processed"  # Default status
-        payslip.net_salary = payslip.net_pay + 800  # Match the template's expected attribute
     
     return render(request, "index.html", {
         "employee": employee,
-        "announcements": leave_activities[:5],  # Limit to 5 most recent announcements
-        "payslips": payslips,
-        "most_recent_salary": most_recent_salary,
-        "leave_balance": leave_balance
+        "announcements": leave_activities[:5]  # Limit to 5 most recent announcements
     })
 
 # ---------------- Payroll View ----------------
@@ -499,6 +456,7 @@ def request_leave_success(request):
     employee = Employee.objects.get(id=user_id)
     leave_requests = Leave.objects.filter(employee=employee).order_by('-requested_on')
 
+    return redirect("leave")
     return render(request, "leave.html", {
         "employee": employee,
         "success_message": "Leave request submitted successfully!",
@@ -722,25 +680,6 @@ def get_leave_report(request):
     return JsonResponse({"report": result, "totals": totals}, safe=False)
 
 
-def update_profile(request):
-
-    print("Hiiii")
-    if request.method == 'POST':
-        employee_id = request.session.get("user_id")
-    
-        print("Emp ", employee_id)
-        try:
-            employee = Employee.objects.get(id=employee_id)  # Fetch user by email
-        except Employee.DoesNotExist:
-            return redirect('settings')
-        
-        # Ensure the user is authenticated
-        employee.first_name = request.POST.get('first_name', employee.first_name)
-        employee.last_name = request.POST.get('last_name', employee.last_name)
-        employee.email = request.POST.get('email', employee.email)
-        employee.save()
-        
-    return render(request, 'settings.html', {"user": employee})
 
 
 def update_profile_pass(request):
@@ -883,7 +822,7 @@ def employee_view(request):
     if not user_id:
         return redirect("login")
     
-    employees = Employee.objects.all()
+    employees = Employee.objects.all().order_by('id')
     emp = Employee.objects.get(id = user_id)
     print(emp)
     return render(request, "employee.html", {"users": employees, "user": emp})
@@ -925,7 +864,7 @@ def update_profile_image(request):
                     employee.profile_image = data
                     employee.save()
                     
-                    
+                    messages.success(request, "Profile image updated successfully!")
                 except Exception as e:
                     messages.error(request, f"Error processing image: {str(e)}")
             else:
@@ -942,30 +881,87 @@ def update_profile_image(request):
     return redirect('dashboard')
 
 
-
+import re 
 def update_employee(request):
     if request.method == 'POST':
         try:
             employee = Employee.objects.get(id=request.POST.get('employee_id'))  # Fetch user by email
         except Employee.DoesNotExist:
-            return redirect('settings')
+            return redirect('employee')
+        
         
         # Ensure the user is authenticated
-        full_name = request.POST.get('name', '')
-        if full_name:
-            name_parts = full_name.strip().split(' ', 1)  # split into first and last
-            employee.first_name = name_parts[0]
-            if len(name_parts) > 1:
-                employee.last_name = name_parts[1]
-            else:
-                employee.last_name = ''
-                
-        employee.email = request.POST.get('email', employee.email)
-        employee.save()
+        try:
+            full_name = request.POST.get('name', '')
+            if full_name:
+                name_parts = full_name.strip().split(' ', 1)  # split into first and last
+                first_name = name_parts[0]
+                last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+                # Regex: Only allow letters and spaces (you can modify to include hyphens or apostrophes if needed)
+                name_pattern = r'^[A-Za-z]+$'
+
+                if not re.fullmatch(name_pattern, first_name):
+                    messages.error(request, "First name must contain only letters.")
+                    return redirect('employee')
+
+                if last_name and not re.fullmatch(name_pattern, last_name):
+                    messages.error(request, "Last name must contain only letters.")
+                    return redirect('employee')
+
+                employee.first_name = first_name
+                employee.last_name = last_name    
+            employee.email = request.POST.get('email', employee.email)
+            employee.save()
+        except Exception as e:
+            messages.error(request, f"Error updating employee: {str(e)}")
 
         logged_employee_id = request.session.get("user_id")
         logged_employee = Employee.objects.get(id=logged_employee_id)
 
         employees = Employee.objects.all()
         return redirect("employee")
+
+
+def update_profile(request):
+
+    print("Hiiii")
+    if request.method == 'POST':
+        employee_id = request.session.get("user_id")
     
+        print("Emp ", employee_id)
+        try:
+            employee = Employee.objects.get(id=employee_id)  # Fetch user by email
+        except Employee.DoesNotExist:
+            return redirect('settings')
+        
+        # Ensure the user is authenticated
+        try:
+            first_name = request.POST.get('first_name', employee.first_name)
+            last_name = request.POST.get('last_name', employee.last_name)
+            name_pattern = r'^[A-Za-z]+$'
+
+            if not re.fullmatch(name_pattern, first_name):
+                messages.error(request, "First name must contain only letters.")
+                return redirect('settings')
+
+            if last_name and not re.fullmatch(name_pattern, last_name):
+                messages.error(request, "Last name must contain only letters.")
+                return redirect('settings')
+            
+            employee.email = request.POST.get('email', employee.email)
+            employee.save()
+        except Exception as e:
+            messages.error(request, f"Error updating employee: {str(e)}")
+
+    return render(request, 'settings.html', {"user": employee})
+
+def cancel_leave_view(request, leave_id):
+    leave = Leave.objects.get(id=leave_id)
+    if not leave:
+        messages.error(request, 'Leave request not found.')
+        return redirect('leave')
+
+    leave.delete()  # Permanently remove the leave request from the DB
+    messages.success(request, 'Leave request cancelled successfully.')
+    return redirect('leave')  # Redirect to the leave page
